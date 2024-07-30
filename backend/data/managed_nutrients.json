@@ -1,0 +1,29 @@
+[
+    {
+        "type": "category",
+        "name": "Test Category",
+        "children": [
+            {
+                "type": "nutrient",
+                "name": "A Test Nutrient",
+                "description": "This is a test nutrient"
+            },
+            {
+                "type": "nutrient",
+                "name": "C Test Nutrient 2",
+                "description": "This is a test nutrient 2"
+            },
+            {
+                "type": "category",
+                "name": "B Test Category 2",
+                "children": [
+                    {
+                        "type": "nutrient",
+                        "name": "Test Nutrient 3",
+                        "description": "This is a test nutrient 3"
+                    }
+                ]
+            }
+        ]
+    }
+]

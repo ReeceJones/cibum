@@ -1,0 +1,10 @@
+postgresql:
+  auth:
+    enablePostgresUser: false
+    username: cibum
+    password: cibum
+    database: cibum
+
+redis:
+  auth:
+    password: cibum
