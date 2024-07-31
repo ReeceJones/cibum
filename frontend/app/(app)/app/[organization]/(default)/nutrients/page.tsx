@@ -1,4 +1,3 @@
-import { PageHeading } from "@/components/ui/heading";
 import { NutrientTable } from "./nutrient-table";
 import {
   Card,
@@ -11,7 +10,6 @@ import {
 export default function NutritionPage() {
   return (
     <div>
-      {/* <PageHeading>Nutrients</PageHeading> */}
       <Card>
         <CardHeader>
           <CardTitle>Nutrients</CardTitle>

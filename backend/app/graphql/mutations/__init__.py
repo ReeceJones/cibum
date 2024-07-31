@@ -1,3 +1,4 @@
-from . import nutrient_categories, nutrient_settings, nutrients
+from . import (ingredient_categories, ingredients, nutrient_categories,
+               nutrients)
 
-__all__ = ["nutrients", "nutrient_categories", "nutrient_settings"]
+__all__ = ["nutrients", "nutrient_categories", "ingredient_categories", "ingredients"]

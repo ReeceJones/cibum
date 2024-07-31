@@ -127,6 +127,7 @@ async def delete_nutrient(
                 raise Exception("Cannot delete managed nutrient")
 
             nutrient.archived = True
-            await db.commit()
+
+        await db.commit()
 
         return schemas.DeletedNode(success=True)

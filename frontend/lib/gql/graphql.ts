@@ -18,6 +18,18 @@ export type Scalars = {
   GlobalID: { input: any; output: any; }
 };
 
+export type CreateIngredientCategoryInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  parentIngredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+};
+
+export type CreateIngredientInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+  name: Scalars['String']['input'];
+};
+
 export type CreateNutrientCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -39,15 +51,90 @@ export type DeletedNode = {
   success: Scalars['Boolean']['output'];
 };
 
+export type Ingredient = Node & {
+  __typename?: 'Ingredient';
+  description?: Maybe<Scalars['String']['output']>;
+  /** The Globally Unique ID of this object */
+  id: Scalars['GlobalID']['output'];
+  ingredientCategory?: Maybe<IngredientCategory>;
+  ingredientCategoryId?: Maybe<Scalars['GlobalID']['output']>;
+  managed: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type IngredientCategory = Node & {
+  __typename?: 'IngredientCategory';
+  childIngredientCategories: Array<IngredientCategory>;
+  description?: Maybe<Scalars['String']['output']>;
+  /** The Globally Unique ID of this object */
+  id: Scalars['GlobalID']['output'];
+  ingredients: Array<Ingredient>;
+  managed: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  parentIngredientCategory?: Maybe<IngredientCategory>;
+  parentIngredientCategoryId?: Maybe<Scalars['GlobalID']['output']>;
+};
+
+/** A connection to a list of items. */
+export type IngredientCategoryConnection = {
+  __typename?: 'IngredientCategoryConnection';
+  /** Contains the nodes in this connection */
+  edges: Array<IngredientCategoryEdge>;
+  /** Pagination data for this connection */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type IngredientCategoryEdge = {
+  __typename?: 'IngredientCategoryEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: IngredientCategory;
+};
+
+/** A connection to a list of items. */
+export type IngredientConnection = {
+  __typename?: 'IngredientConnection';
+  /** Contains the nodes in this connection */
+  edges: Array<IngredientEdge>;
+  /** Pagination data for this connection */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type IngredientEdge = {
+  __typename?: 'IngredientEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Ingredient;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  createIngredient: Ingredient;
+  createIngredientCategory: IngredientCategory;
   createNutrient: Nutrient;
   createNutrientCategory: NutrientCategory;
+  deleteIngredient: DeletedNode;
+  deleteIngredientCategory: DeletedNode;
   deleteNutrient: DeletedNode;
   deleteNutrientCategory: DeletedNode;
+  updateIngredient: Ingredient;
+  updateIngredientCategory: IngredientCategory;
   updateNutrient: Nutrient;
   updateNutrientCategory: NutrientCategory;
-  updateNutrientSettings: UpdatedNutrientSettings;
+};
+
+
+export type MutationCreateIngredientArgs = {
+  input: CreateIngredientInput;
+};
+
+
+export type MutationCreateIngredientCategoryArgs = {
+  input: CreateIngredientCategoryInput;
 };
 
 
@@ -61,6 +148,16 @@ export type MutationCreateNutrientCategoryArgs = {
 };
 
 
+export type MutationDeleteIngredientArgs = {
+  input: DeleteNodeInput;
+};
+
+
+export type MutationDeleteIngredientCategoryArgs = {
+  input: DeleteNodeInput;
+};
+
+
 export type MutationDeleteNutrientArgs = {
   input: DeleteNodeInput;
 };
@@ -71,6 +168,16 @@ export type MutationDeleteNutrientCategoryArgs = {
 };
 
 
+export type MutationUpdateIngredientArgs = {
+  input: UpdateIngredientInput;
+};
+
+
+export type MutationUpdateIngredientCategoryArgs = {
+  input: UpdateIngredientCategoryInput;
+};
+
+
 export type MutationUpdateNutrientArgs = {
   input: UpdateNutrientInput;
 };
@@ -78,11 +185,6 @@ export type MutationUpdateNutrientArgs = {
 
 export type MutationUpdateNutrientCategoryArgs = {
   input: UpdateNutrientCategoryInput;
-};
-
-
-export type MutationUpdateNutrientSettingsArgs = {
-  input: UpdateNutrientSettingsInput;
 };
 
 /** An object with a Globally Unique ID */
@@ -133,15 +235,6 @@ export type NutrientCategoryEdge = {
   node: NutrientCategory;
 };
 
-export type NutrientCategorySettingsInput = {
-  childCategories?: InputMaybe<Array<NutrientCategorySettingsInput>>;
-  childNutrients?: InputMaybe<Array<NutrientSettingsInput>>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['GlobalID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  parentNutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
-};
-
 /** A connection to a list of items. */
 export type NutrientConnection = {
   __typename?: 'NutrientConnection';
@@ -160,13 +253,6 @@ export type NutrientEdge = {
   node: Nutrient;
 };
 
-export type NutrientSettingsInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['GlobalID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  nutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
-};
-
 /** Information to aid in pagination. */
 export type PageInfo = {
   __typename?: 'PageInfo';
@@ -182,9 +268,28 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
+  ingredientCategories: IngredientCategoryConnection;
+  ingredients: IngredientConnection;
   node: Node;
   nutrientCategories: NutrientCategoryConnection;
   nutrients: NutrientConnection;
+};
+
+
+export type QueryIngredientCategoriesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  required?: Scalars['Boolean']['input'];
+};
+
+
+export type QueryIngredientsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -208,6 +313,20 @@ export type QueryNutrientsArgs = {
   last?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type UpdateIngredientCategoryInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['GlobalID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  parentIngredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+};
+
+export type UpdateIngredientInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['GlobalID']['input'];
+  ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateNutrientCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['GlobalID']['input'];
@@ -222,17 +341,19 @@ export type UpdateNutrientInput = {
   nutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
 };
 
-export type UpdateNutrientSettingsInput = {
-  deleteNutrientCategories?: InputMaybe<DeleteNodeInput>;
-  deleteNutrients?: InputMaybe<DeleteNodeInput>;
-  updateNutrientCategories?: InputMaybe<Array<NutrientCategorySettingsInput>>;
-  updateNutrients?: InputMaybe<Array<NutrientSettingsInput>>;
-};
+export type CreateIngredientCategoryMutationVariables = Exact<{
+  input: CreateIngredientCategoryInput;
+}>;
 
-export type UpdatedNutrientSettings = {
-  __typename?: 'UpdatedNutrientSettings';
-  success: Scalars['Boolean']['output'];
-};
+
+export type CreateIngredientCategoryMutation = { __typename?: 'Mutation', createIngredientCategory: { __typename?: 'IngredientCategory', id: any } };
+
+export type CreateIngredientMutationVariables = Exact<{
+  input: CreateIngredientInput;
+}>;
+
+
+export type CreateIngredientMutation = { __typename?: 'Mutation', createIngredient: { __typename?: 'Ingredient', id: any } };
 
 export type CreateNutrientCategoryMutationVariables = Exact<{
   input: CreateNutrientCategoryInput;
@@ -248,6 +369,20 @@ export type CreateNutrientMutationVariables = Exact<{
 
 export type CreateNutrientMutation = { __typename?: 'Mutation', createNutrient: { __typename?: 'Nutrient', id: any } };
 
+export type DeleteIngredientCategoryMutationVariables = Exact<{
+  input: DeleteNodeInput;
+}>;
+
+
+export type DeleteIngredientCategoryMutation = { __typename?: 'Mutation', deleteIngredientCategory: { __typename?: 'DeletedNode', success: boolean } };
+
+export type DeleteIngredientMutationVariables = Exact<{
+  input: DeleteNodeInput;
+}>;
+
+
+export type DeleteIngredientMutation = { __typename?: 'Mutation', deleteIngredient: { __typename?: 'DeletedNode', success: boolean } };
+
 export type DeleteNutrientCategoryMutationVariables = Exact<{
   input: DeleteNodeInput;
 }>;
@@ -261,6 +396,20 @@ export type DeleteNutrientMutationVariables = Exact<{
 
 
 export type DeleteNutrientMutation = { __typename?: 'Mutation', deleteNutrient: { __typename?: 'DeletedNode', success: boolean } };
+
+export type UpdateIngredientCategoryMutationVariables = Exact<{
+  input: UpdateIngredientCategoryInput;
+}>;
+
+
+export type UpdateIngredientCategoryMutation = { __typename?: 'Mutation', updateIngredientCategory: { __typename?: 'IngredientCategory', id: any } };
+
+export type UpdateIngredientMutationVariables = Exact<{
+  input: UpdateIngredientInput;
+}>;
+
+
+export type UpdateIngredientMutation = { __typename?: 'Mutation', updateIngredient: { __typename?: 'Ingredient', id: any } };
 
 export type UpdateNutrientCategoryMutationVariables = Exact<{
   input: UpdateNutrientCategoryInput;
@@ -276,12 +425,10 @@ export type UpdateNutrientMutationVariables = Exact<{
 
 export type UpdateNutrientMutation = { __typename?: 'Mutation', updateNutrient: { __typename?: 'Nutrient', id: any } };
 
-export type UpdateNutrientSettingsMutationVariables = Exact<{
-  input: UpdateNutrientSettingsInput;
-}>;
+export type GetAllIngredientsAndCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UpdateNutrientSettingsMutation = { __typename?: 'Mutation', updateNutrientSettings: { __typename?: 'UpdatedNutrientSettings', success: boolean } };
+export type GetAllIngredientsAndCategoriesQuery = { __typename?: 'Query', ingredients: { __typename?: 'IngredientConnection', edges: Array<{ __typename?: 'IngredientEdge', node: { __typename?: 'Ingredient', id: any, name: string, description?: string | null, managed: boolean, ingredientCategoryId?: any | null } }> }, ingredientCategories: { __typename?: 'IngredientCategoryConnection', edges: Array<{ __typename?: 'IngredientCategoryEdge', node: { __typename?: 'IngredientCategory', id: any, name: string, description?: string | null, parentIngredientCategoryId?: any | null, managed: boolean } }> } };
 
 export type GetAllNutrientsAndCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -289,11 +436,17 @@ export type GetAllNutrientsAndCategoriesQueryVariables = Exact<{ [key: string]: 
 export type GetAllNutrientsAndCategoriesQuery = { __typename?: 'Query', nutrients: { __typename?: 'NutrientConnection', edges: Array<{ __typename?: 'NutrientEdge', node: { __typename?: 'Nutrient', id: any, name: string, description?: string | null, managed: boolean, nutrientCategoryId?: any | null } }> }, nutrientCategories: { __typename?: 'NutrientCategoryConnection', edges: Array<{ __typename?: 'NutrientCategoryEdge', node: { __typename?: 'NutrientCategory', id: any, name: string, description?: string | null, parentNutrientCategoryId?: any | null, managed: boolean } }> } };
 
 
+export const CreateIngredientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateIngredientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateIngredientCategoryInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createIngredientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<CreateIngredientCategoryMutation, CreateIngredientCategoryMutationVariables>;
+export const CreateIngredientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateIngredient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateIngredientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createIngredient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<CreateIngredientMutation, CreateIngredientMutationVariables>;
 export const CreateNutrientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateNutrientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateNutrientCategoryInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createNutrientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<CreateNutrientCategoryMutation, CreateNutrientCategoryMutationVariables>;
 export const CreateNutrientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateNutrient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateNutrientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createNutrient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<CreateNutrientMutation, CreateNutrientMutationVariables>;
+export const DeleteIngredientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteIngredientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteNodeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteIngredientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<DeleteIngredientCategoryMutation, DeleteIngredientCategoryMutationVariables>;
+export const DeleteIngredientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteIngredient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteNodeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteIngredient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<DeleteIngredientMutation, DeleteIngredientMutationVariables>;
 export const DeleteNutrientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteNutrientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteNodeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteNutrientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<DeleteNutrientCategoryMutation, DeleteNutrientCategoryMutationVariables>;
 export const DeleteNutrientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteNutrient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteNodeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteNutrient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<DeleteNutrientMutation, DeleteNutrientMutationVariables>;
+export const UpdateIngredientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateIngredientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateIngredientCategoryInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateIngredientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UpdateIngredientCategoryMutation, UpdateIngredientCategoryMutationVariables>;
+export const UpdateIngredientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateIngredient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateIngredientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateIngredient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UpdateIngredientMutation, UpdateIngredientMutationVariables>;
 export const UpdateNutrientCategoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNutrientCategory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNutrientCategoryInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNutrientCategory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UpdateNutrientCategoryMutation, UpdateNutrientCategoryMutationVariables>;
 export const UpdateNutrientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNutrient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNutrientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNutrient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UpdateNutrientMutation, UpdateNutrientMutationVariables>;
-export const UpdateNutrientSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNutrientSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNutrientSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNutrientSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<UpdateNutrientSettingsMutation, UpdateNutrientSettingsMutationVariables>;
+export const GetAllIngredientsAndCategoriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAllIngredientsAndCategories"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ingredients"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"managed"}},{"kind":"Field","name":{"kind":"Name","value":"ingredientCategoryId"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"ingredientCategories"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"parentIngredientCategoryId"}},{"kind":"Field","name":{"kind":"Name","value":"managed"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetAllIngredientsAndCategoriesQuery, GetAllIngredientsAndCategoriesQueryVariables>;
 export const GetAllNutrientsAndCategoriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAllNutrientsAndCategories"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"nutrients"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"managed"}},{"kind":"Field","name":{"kind":"Name","value":"nutrientCategoryId"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"nutrientCategories"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"parentNutrientCategoryId"}},{"kind":"Field","name":{"kind":"Name","value":"managed"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetAllNutrientsAndCategoriesQuery, GetAllNutrientsAndCategoriesQueryVariables>;

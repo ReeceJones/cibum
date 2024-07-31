@@ -108,8 +108,8 @@ async def get_nutrients(
 
 
 async def resolve_child_nutrients(
-    id: int,
     info: "context.Info",
+    id: int,
 ) -> list["schemas.Nutrient"]:
     if not context.has_org(info.context.user):
         raise AuthError

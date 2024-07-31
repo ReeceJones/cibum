@@ -121,3 +121,89 @@ class ManagedNutrientOverride(Base):
         "Nutrient",
         back_populates="managed_nutrient_overrides",
     )
+
+
+class IngredientCategory(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[str | None] = mapped_column(ForeignKey("organization.id"))
+    parent_ingredient_category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ingredientcategory.id")
+    )
+    name: Mapped[str] = mapped_column(index=True)
+    description: Mapped[str | None]
+    managed: Mapped[bool] = mapped_column(default=False)
+
+    parent_ingredient_category: Mapped[Optional["IngredientCategory"]] = relationship(
+        "IngredientCategory",
+        remote_side="IngredientCategory.id",
+        back_populates="child_ingredient_categories",
+    )
+    child_ingredient_categories: Mapped[list["IngredientCategory"]] = relationship(
+        "IngredientCategory",
+        remote_side="IngredientCategory.parent_ingredient_category_id",
+        back_populates="parent_ingredient_category",
+    )
+    ingredients: Mapped[list["Ingredient"]] = relationship(
+        "Ingredient",
+        back_populates="ingredient_category",
+    )
+    managed_ingredient_category_overrides: Mapped[
+        list["ManagedIngredientCategoryOverride"]
+    ] = relationship(
+        "ManagedIngredientCategoryOverride",
+        back_populates="ingredient_category",
+    )
+
+
+class ManagedIngredientCategoryOverride(Base):
+    organization_id: Mapped[str] = mapped_column(
+        ForeignKey("organization.id"), primary_key=True
+    )
+    ingredient_category_id: Mapped[int] = mapped_column(
+        ForeignKey("ingredientcategory.id"), primary_key=True
+    )
+    name: Mapped[str | None] = mapped_column(index=True)
+    description: Mapped[str | None]
+
+    ingredient_category: Mapped[IngredientCategory] = relationship(
+        "IngredientCategory",
+        back_populates="managed_ingredient_category_overrides",
+    )
+
+
+class Ingredient(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[str | None] = mapped_column(ForeignKey("organization.id"))
+    ingredient_category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ingredientcategory.id")
+    )
+    name: Mapped[str] = mapped_column(index=True)
+    description: Mapped[str | None]
+    managed: Mapped[bool] = mapped_column(default=False)
+
+    ingredient_category: Mapped[IngredientCategory] = relationship(
+        "IngredientCategory",
+        back_populates="ingredients",
+    )
+    managed_ingredient_overrides: Mapped[list["ManagedIngredientOverride"]] = (
+        relationship(
+            "ManagedIngredientOverride",
+            back_populates="ingredient",
+        )
+    )
+
+
+class ManagedIngredientOverride(Base):
+    organization_id: Mapped[str] = mapped_column(
+        ForeignKey("organization.id"), primary_key=True
+    )
+    ingredient_id: Mapped[int] = mapped_column(
+        ForeignKey("ingredient.id"), primary_key=True
+    )
+    name: Mapped[str | None] = mapped_column(index=True)
+    description: Mapped[str | None]
+
+    ingredient: Mapped[Ingredient] = relationship(
+        "Ingredient",
+        back_populates="managed_ingredient_overrides",
+    )

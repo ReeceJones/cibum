@@ -15,6 +15,18 @@ export type Scalars = {
   GlobalID: { input: any; output: any; }
 };
 
+export type CreateIngredientCategoryInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  parentIngredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+};
+
+export type CreateIngredientInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+  name: Scalars['String']['input'];
+};
+
 export type CreateNutrientCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -36,15 +48,90 @@ export type DeletedNode = {
   success: Scalars['Boolean']['output'];
 };
 
+export type Ingredient = Node & {
+  __typename?: 'Ingredient';
+  description?: Maybe<Scalars['String']['output']>;
+  /** The Globally Unique ID of this object */
+  id: Scalars['GlobalID']['output'];
+  ingredientCategory?: Maybe<IngredientCategory>;
+  ingredientCategoryId?: Maybe<Scalars['GlobalID']['output']>;
+  managed: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type IngredientCategory = Node & {
+  __typename?: 'IngredientCategory';
+  childIngredientCategories: Array<IngredientCategory>;
+  description?: Maybe<Scalars['String']['output']>;
+  /** The Globally Unique ID of this object */
+  id: Scalars['GlobalID']['output'];
+  ingredients: Array<Ingredient>;
+  managed: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  parentIngredientCategory?: Maybe<IngredientCategory>;
+  parentIngredientCategoryId?: Maybe<Scalars['GlobalID']['output']>;
+};
+
+/** A connection to a list of items. */
+export type IngredientCategoryConnection = {
+  __typename?: 'IngredientCategoryConnection';
+  /** Contains the nodes in this connection */
+  edges: Array<IngredientCategoryEdge>;
+  /** Pagination data for this connection */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type IngredientCategoryEdge = {
+  __typename?: 'IngredientCategoryEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: IngredientCategory;
+};
+
+/** A connection to a list of items. */
+export type IngredientConnection = {
+  __typename?: 'IngredientConnection';
+  /** Contains the nodes in this connection */
+  edges: Array<IngredientEdge>;
+  /** Pagination data for this connection */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type IngredientEdge = {
+  __typename?: 'IngredientEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Ingredient;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  createIngredient: Ingredient;
+  createIngredientCategory: IngredientCategory;
   createNutrient: Nutrient;
   createNutrientCategory: NutrientCategory;
+  deleteIngredient: DeletedNode;
+  deleteIngredientCategory: DeletedNode;
   deleteNutrient: DeletedNode;
   deleteNutrientCategory: DeletedNode;
+  updateIngredient: Ingredient;
+  updateIngredientCategory: IngredientCategory;
   updateNutrient: Nutrient;
   updateNutrientCategory: NutrientCategory;
-  updateNutrientSettings: UpdatedNutrientSettings;
+};
+
+
+export type MutationCreateIngredientArgs = {
+  input: CreateIngredientInput;
+};
+
+
+export type MutationCreateIngredientCategoryArgs = {
+  input: CreateIngredientCategoryInput;
 };
 
 
@@ -58,6 +145,16 @@ export type MutationCreateNutrientCategoryArgs = {
 };
 
 
+export type MutationDeleteIngredientArgs = {
+  input: DeleteNodeInput;
+};
+
+
+export type MutationDeleteIngredientCategoryArgs = {
+  input: DeleteNodeInput;
+};
+
+
 export type MutationDeleteNutrientArgs = {
   input: DeleteNodeInput;
 };
@@ -68,6 +165,16 @@ export type MutationDeleteNutrientCategoryArgs = {
 };
 
 
+export type MutationUpdateIngredientArgs = {
+  input: UpdateIngredientInput;
+};
+
+
+export type MutationUpdateIngredientCategoryArgs = {
+  input: UpdateIngredientCategoryInput;
+};
+
+
 export type MutationUpdateNutrientArgs = {
   input: UpdateNutrientInput;
 };
@@ -75,11 +182,6 @@ export type MutationUpdateNutrientArgs = {
 
 export type MutationUpdateNutrientCategoryArgs = {
   input: UpdateNutrientCategoryInput;
-};
-
-
-export type MutationUpdateNutrientSettingsArgs = {
-  input: UpdateNutrientSettingsInput;
 };
 
 /** An object with a Globally Unique ID */
@@ -130,15 +232,6 @@ export type NutrientCategoryEdge = {
   node: NutrientCategory;
 };
 
-export type NutrientCategorySettingsInput = {
-  childCategories?: InputMaybe<Array<NutrientCategorySettingsInput>>;
-  childNutrients?: InputMaybe<Array<NutrientSettingsInput>>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['GlobalID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  parentNutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
-};
-
 /** A connection to a list of items. */
 export type NutrientConnection = {
   __typename?: 'NutrientConnection';
@@ -157,13 +250,6 @@ export type NutrientEdge = {
   node: Nutrient;
 };
 
-export type NutrientSettingsInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['GlobalID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  nutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
-};
-
 /** Information to aid in pagination. */
 export type PageInfo = {
   __typename?: 'PageInfo';
@@ -179,9 +265,28 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
+  ingredientCategories: IngredientCategoryConnection;
+  ingredients: IngredientConnection;
   node: Node;
   nutrientCategories: NutrientCategoryConnection;
   nutrients: NutrientConnection;
+};
+
+
+export type QueryIngredientCategoriesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  required?: Scalars['Boolean']['input'];
+};
+
+
+export type QueryIngredientsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -205,6 +310,20 @@ export type QueryNutrientsArgs = {
   last?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type UpdateIngredientCategoryInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['GlobalID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  parentIngredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+};
+
+export type UpdateIngredientInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['GlobalID']['input'];
+  ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateNutrientCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['GlobalID']['input'];
@@ -217,16 +336,4 @@ export type UpdateNutrientInput = {
   id: Scalars['GlobalID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   nutrientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
-};
-
-export type UpdateNutrientSettingsInput = {
-  deleteNutrientCategories?: InputMaybe<DeleteNodeInput>;
-  deleteNutrients?: InputMaybe<DeleteNodeInput>;
-  updateNutrientCategories?: InputMaybe<Array<NutrientCategorySettingsInput>>;
-  updateNutrients?: InputMaybe<Array<NutrientSettingsInput>>;
-};
-
-export type UpdatedNutrientSettings = {
-  __typename?: 'UpdatedNutrientSettings';
-  success: Scalars['Boolean']['output'];
 };

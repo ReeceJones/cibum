@@ -151,3 +151,138 @@ async def get_child_nutrients_with_overrides(
     }
 
     return [(x, nutrient_overrides_dict.get(x.id)) for x in nutrients]
+
+
+async def get_ingredient_categories_with_overrides(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[
+    tuple[
+        models.IngredientCategory,
+        models.ManagedIngredientCategoryOverride | None,
+    ]
+]:
+    ingredient_categories = await db.scalars(
+        select(models.IngredientCategory).where(
+            models.IngredientCategory.id.in_(ids),
+            models.IngredientCategory.archived == False,
+        )
+    )
+
+    ingredient_category_overrides = await db.scalars(
+        select(models.ManagedIngredientCategoryOverride).where(
+            models.ManagedIngredientCategoryOverride.ingredient_category_id.in_(ids),
+            models.ManagedIngredientCategoryOverride.archived == False,
+        )
+    )
+
+    ingredient_category_overrides_dict: dict[
+        int, models.ManagedIngredientCategoryOverride
+    ] = {x.ingredient_category_id: x for x in ingredient_category_overrides}
+
+    return [
+        (x, ingredient_category_overrides_dict.get(x.id)) for x in ingredient_categories
+    ]
+
+
+async def get_ingredients_with_overrides(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[tuple[models.Ingredient, models.ManagedIngredientOverride | None]]:
+    ingredients = await db.scalars(
+        select(models.Ingredient).where(
+            models.Ingredient.id.in_(ids),
+            models.Ingredient.archived == False,
+        )
+    )
+
+    ingredient_overrides = await db.scalars(
+        select(models.ManagedIngredientOverride).where(
+            models.ManagedIngredientOverride.ingredient_id.in_(ids),
+            models.ManagedIngredientOverride.archived == False,
+        )
+    )
+
+    ingredient_overrides_dict: dict[int, models.ManagedIngredientOverride] = {
+        x.ingredient_id: x for x in ingredient_overrides
+    }
+
+    return [(x, ingredient_overrides_dict.get(x.id)) for x in ingredients]
+
+
+async def get_child_ingredient_categories_with_overrides(
+    db: AsyncSession,
+    id: int,
+    org_id: str,
+) -> list[
+    tuple[
+        models.IngredientCategory,
+        models.ManagedIngredientCategoryOverride | None,
+    ]
+]:
+    ingredient_categories = await db.scalars(
+        select(models.IngredientCategory).where(
+            models.IngredientCategory.parent_ingredient_category_id == id,
+            or_(
+                models.IngredientCategory.organization_id == org_id,
+                models.IngredientCategory.organization_id == None,
+            ),
+            models.IngredientCategory.archived == False,
+        )
+    )
+
+    ingredient_category_overrides = await db.scalars(
+        select(models.ManagedIngredientCategoryOverride).where(
+            models.ManagedIngredientCategoryOverride.ingredient_category_id.in_(
+                [x.id for x in ingredient_categories]
+            ),
+            models.ManagedIngredientCategoryOverride.organization_id == org_id,
+            models.ManagedIngredientCategoryOverride.archived == False,
+        )
+    )
+
+    ingredient_category_overrides_dict: dict[
+        int, models.ManagedIngredientCategoryOverride
+    ] = {x.ingredient_category_id: x for x in ingredient_category_overrides}
+
+    return [
+        (x, ingredient_category_overrides_dict.get(x.id)) for x in ingredient_categories
+    ]
+
+
+async def get_child_ingredients_with_overrides(
+    db: AsyncSession,
+    id: int,
+    org_id: str,
+) -> list[
+    tuple[
+        models.Ingredient,
+        models.ManagedIngredientOverride | None,
+    ]
+]:
+    ingredients = await db.scalars(
+        select(models.Ingredient).where(
+            models.Ingredient.ingredient_category_id == id,
+            or_(
+                models.Ingredient.organization_id == org_id,
+                models.Ingredient.organization_id == None,
+            ),
+            models.Ingredient.archived == False,
+        )
+    )
+
+    ingredient_overrides = await db.scalars(
+        select(models.ManagedIngredientOverride).where(
+            models.ManagedIngredientOverride.ingredient_id.in_(
+                [x.id for x in ingredients]
+            ),
+            models.ManagedIngredientOverride.organization_id == org_id,
+            models.ManagedIngredientOverride.archived == False,
+        )
+    )
+
+    ingredient_overrides_dict: dict[int, models.ManagedIngredientOverride] = {
+        x.ingredient_id: x for x in ingredient_overrides
+    }
+
+    return [(x, ingredient_overrides_dict.get(x.id)) for x in ingredients]

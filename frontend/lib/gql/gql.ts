@@ -13,13 +13,19 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
+    "\nmutation CreateIngredientCategory($input: CreateIngredientCategoryInput!) {\n  createIngredientCategory(input: $input) {\n    id\n  }\n}\n": types.CreateIngredientCategoryDocument,
+    "\nmutation CreateIngredient($input: CreateIngredientInput!) {\n  createIngredient(input: $input) {\n    id\n  }\n}\n": types.CreateIngredientDocument,
     "\nmutation CreateNutrientCategory($input: CreateNutrientCategoryInput!) {\n  createNutrientCategory(input: $input) {\n    id\n  }\n}\n": types.CreateNutrientCategoryDocument,
     "\nmutation CreateNutrient($input: CreateNutrientInput!) {\n  createNutrient(input: $input) {\n    id\n  }\n}\n": types.CreateNutrientDocument,
+    "\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n": types.DeleteIngredientCategoryDocument,
+    "\nmutation DeleteIngredient($input: DeleteNodeInput!) {\n  deleteIngredient(input: $input) {\n    success\n  }\n}\n": types.DeleteIngredientDocument,
     "\nmutation DeleteNutrientCategory($input: DeleteNodeInput!) {\n  deleteNutrientCategory(input: $input) {\n    success\n  }\n}\n": types.DeleteNutrientCategoryDocument,
     "\nmutation DeleteNutrient($input: DeleteNodeInput!) {\n  deleteNutrient(input: $input) {\n    success\n  }\n}\n": types.DeleteNutrientDocument,
+    "\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n": types.UpdateIngredientCategoryDocument,
+    "\nmutation UpdateIngredient($input: UpdateIngredientInput!) {\n  updateIngredient(input: $input) {\n    id\n  }\n}\n": types.UpdateIngredientDocument,
     "\nmutation UpdateNutrientCategory($input: UpdateNutrientCategoryInput!) {\n  updateNutrientCategory(input: $input) {\n    id\n  }\n}\n": types.UpdateNutrientCategoryDocument,
     "\nmutation UpdateNutrient($input: UpdateNutrientInput!) {\n  updateNutrient(input: $input) {\n    id\n  }\n}\n": types.UpdateNutrientDocument,
-    "\nmutation UpdateNutrientSettings($input: UpdateNutrientSettingsInput!) {\n  updateNutrientSettings(input: $input) {\n    success\n  }\n}  \n": types.UpdateNutrientSettingsDocument,
+    "\nquery GetAllIngredientsAndCategories {\n  ingredients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        ingredientCategoryId\n      }\n    }\n  }\n  ingredientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentIngredientCategoryId\n        managed\n      }\n    }\n  }\n}\n": types.GetAllIngredientsAndCategoriesDocument,
     "\nquery GetAllNutrientsAndCategories {\n  nutrients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        nutrientCategoryId\n      }\n    }\n  }\n  nutrientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentNutrientCategoryId\n        managed\n      }\n    }\n  }\n}\n": types.GetAllNutrientsAndCategoriesDocument,
 };
 
@@ -40,11 +46,27 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\nmutation CreateIngredientCategory($input: CreateIngredientCategoryInput!) {\n  createIngredientCategory(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation CreateIngredientCategory($input: CreateIngredientCategoryInput!) {\n  createIngredientCategory(input: $input) {\n    id\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\nmutation CreateIngredient($input: CreateIngredientInput!) {\n  createIngredient(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation CreateIngredient($input: CreateIngredientInput!) {\n  createIngredient(input: $input) {\n    id\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\nmutation CreateNutrientCategory($input: CreateNutrientCategoryInput!) {\n  createNutrientCategory(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation CreateNutrientCategory($input: CreateNutrientCategoryInput!) {\n  createNutrientCategory(input: $input) {\n    id\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\nmutation CreateNutrient($input: CreateNutrientInput!) {\n  createNutrient(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation CreateNutrient($input: CreateNutrientInput!) {\n  createNutrient(input: $input) {\n    id\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n"): (typeof documents)["\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\nmutation DeleteIngredient($input: DeleteNodeInput!) {\n  deleteIngredient(input: $input) {\n    success\n  }\n}\n"): (typeof documents)["\nmutation DeleteIngredient($input: DeleteNodeInput!) {\n  deleteIngredient(input: $input) {\n    success\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -56,6 +78,14 @@ export function graphql(source: "\nmutation DeleteNutrient($input: DeleteNodeInp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\nmutation UpdateIngredient($input: UpdateIngredientInput!) {\n  updateIngredient(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation UpdateIngredient($input: UpdateIngredientInput!) {\n  updateIngredient(input: $input) {\n    id\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\nmutation UpdateNutrientCategory($input: UpdateNutrientCategoryInput!) {\n  updateNutrientCategory(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation UpdateNutrientCategory($input: UpdateNutrientCategoryInput!) {\n  updateNutrientCategory(input: $input) {\n    id\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -64,7 +94,7 @@ export function graphql(source: "\nmutation UpdateNutrient($input: UpdateNutrien
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\nmutation UpdateNutrientSettings($input: UpdateNutrientSettingsInput!) {\n  updateNutrientSettings(input: $input) {\n    success\n  }\n}  \n"): (typeof documents)["\nmutation UpdateNutrientSettings($input: UpdateNutrientSettingsInput!) {\n  updateNutrientSettings(input: $input) {\n    success\n  }\n}  \n"];
+export function graphql(source: "\nquery GetAllIngredientsAndCategories {\n  ingredients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        ingredientCategoryId\n      }\n    }\n  }\n  ingredientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentIngredientCategoryId\n        managed\n      }\n    }\n  }\n}\n"): (typeof documents)["\nquery GetAllIngredientsAndCategories {\n  ingredients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        ingredientCategoryId\n      }\n    }\n  }\n  ingredientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentIngredientCategoryId\n        managed\n      }\n    }\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

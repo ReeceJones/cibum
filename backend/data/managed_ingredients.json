@@ -1,0 +1,29 @@
+[
+    {
+        "type": "category",
+        "name": "Test Category",
+        "children": [
+            {
+                "type": "ingredient",
+                "name": "Foo",
+                "description": "This is a test nutrient"
+            },
+            {
+                "type": "ingredient",
+                "name": "Bar",
+                "description": "This is a test nutrient 2"
+            },
+            {
+                "type": "category",
+                "name": "Baz",
+                "children": [
+                    {
+                        "type": "ingredient",
+                        "name": "Bak",
+                        "description": "This is a test nutrient 3"
+                    }
+                ]
+            }
+        ]
+    }
+]

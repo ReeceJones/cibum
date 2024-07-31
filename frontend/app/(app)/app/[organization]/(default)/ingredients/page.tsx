@@ -1,9 +1,26 @@
-import { PageHeading } from "@/components/ui/heading";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { IngredientTable } from "./ingredient-table";
 
-export default function IngredientsPage() {
+export default function NutritionPage() {
   return (
     <div>
-      <PageHeading>Ingredients</PageHeading>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ingredients</CardTitle>
+          <CardDescription>
+            Manage the ingredients that are available to be used in diets.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <IngredientTable />
+        </CardContent>
+      </Card>
     </div>
   );
 }

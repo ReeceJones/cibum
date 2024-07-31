@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +19,9 @@ import {
 } from "@/components/ui/popover";
 import { useGraphQLMutation, useGraphQLQuery } from "@/lib/graphql";
 import {
-  getAllNutrientsKey,
-  getAllNutrientsQuery,
-} from "@/lib/queries/get-all-nutrients";
+  getAllIngredientsKey,
+  getAllIngredientsQuery,
+} from "@/lib/queries/get-all-ingredients";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -36,7 +37,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -50,9 +50,9 @@ import {
 } from "react-hook-form";
 import { ClipLoader } from "react-spinners";
 import {
-  nutrientCategorySchema,
-  nutrientFormSchema,
-  nutrientSchema,
+  ingredientCategorySchema,
+  ingredientFormSchema,
+  ingredientSchema,
 } from "./form-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -64,54 +64,54 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { GetAllNutrientsAndCategoriesQuery } from "@/lib/gql/graphql";
+import { GetAllIngredientsAndCategoriesQuery } from "@/lib/gql/graphql";
 import { toast } from "sonner";
-import { createNutrientMutation } from "@/lib/mutations/create-nutrient";
-import { updateNutrientMutation } from "@/lib/mutations/update-nutrient";
-import { updateNutrientCategoryMutation } from "@/lib/mutations/update-nutrient-category";
-import { createNutrientCategoryMutation } from "@/lib/mutations/create-nutrient-category";
-import { deleteNutrientCategoryMutation } from "@/lib/mutations/delete-nutrient-category";
-import { deleteNutrientMutation } from "@/lib/mutations/delete-nutrient";
+import { createIngredientMutation } from "@/lib/mutations/create-ingredient";
+import { updateIngredientMutation } from "@/lib/mutations/update-ingredient";
+import { updateIngredientCategoryMutation } from "@/lib/mutations/update-ingredient-category";
+import { createIngredientCategoryMutation } from "@/lib/mutations/create-ingredient-category";
+import { deleteIngredientCategoryMutation } from "@/lib/mutations/delete-ingredient-category";
+import { deleteIngredientMutation } from "@/lib/mutations/delete-ingredient";
 
-type NutrientTreeNode = {
-  type: "nutrient" | "category";
+type IngredientTreeNode = {
+  type: "ingredient" | "category";
   name: string;
   index: number;
   id: string;
 };
 
-type NutrientTableFormContextType = {
-  form: UseFormReturn<z.infer<typeof nutrientFormSchema>>;
-  index: Map<string, Array<NutrientTreeNode>>;
+type IngredientTableFormContextType = {
+  form: UseFormReturn<z.infer<typeof ingredientFormSchema>>;
+  index: Map<string, Array<IngredientTreeNode>>;
   setIndex: React.Dispatch<
-    React.SetStateAction<Map<string, Array<NutrientTreeNode>>>
+    React.SetStateAction<Map<string, Array<IngredientTreeNode>>>
   >;
 };
 
-const NutrientTableFormContext = createContext<
-  NutrientTableFormContextType | undefined
+const IngredientTableFormContext = createContext<
+  IngredientTableFormContextType | undefined
 >(undefined);
 
-function useNutrientTableForm() {
-  const context = useContext(NutrientTableFormContext);
+function useIngredientTableForm() {
+  const context = useContext(IngredientTableFormContext);
   if (context === undefined) {
     throw new Error(
-      "useNutrientTableForm must be used within a NutrientTableFormProvider"
+      "useIngredientTableForm must be used within a IngredientTableFormProvider"
     );
   }
   return context;
 }
 
-function NutrientForm({
+function IngredientForm({
   form,
   onSave,
 }: {
-  form: UseFormReturn<z.infer<typeof nutrientSchema>>;
-  onSave: (changed: z.infer<typeof nutrientSchema>) => Promise<void>;
+  form: UseFormReturn<z.infer<typeof ingredientSchema>>;
+  onSave: (changed: z.infer<typeof ingredientSchema>) => Promise<void>;
 }) {
   const [disabled, setDisabled] = useState(false);
   const onSubmit = useCallback(
-    async (values: z.infer<typeof nutrientSchema>) => {
+    async (values: z.infer<typeof ingredientSchema>) => {
       setDisabled(true);
       try {
         await onSave(values);
@@ -168,16 +168,16 @@ function NutrientForm({
   );
 }
 
-function NutrientCategoryForm({
+function IngredientCategoryForm({
   form,
   onSave,
 }: {
-  form: UseFormReturn<z.infer<typeof nutrientCategorySchema>>;
-  onSave: (changed: z.infer<typeof nutrientCategorySchema>) => Promise<void>;
+  form: UseFormReturn<z.infer<typeof ingredientCategorySchema>>;
+  onSave: (changed: z.infer<typeof ingredientCategorySchema>) => Promise<void>;
 }) {
   const [disabled, setDisabled] = useState(false);
   const onSubmit = useCallback(
-    async (values: z.infer<typeof nutrientCategorySchema>) => {
+    async (values: z.infer<typeof ingredientCategorySchema>) => {
       setDisabled(true);
       try {
         await onSave(values);
@@ -234,43 +234,43 @@ function NutrientCategoryForm({
   );
 }
 
-function EditNutrientDialog({
+function EditIngredientDialog({
   node,
   onOpenChange,
 }: {
-  node: NutrientTreeNode;
+  node: IngredientTreeNode;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const { form: nutrientTableForm } = useNutrientTableForm();
-  const nutrient = useWatch({
-    control: nutrientTableForm.control,
-    name: `nutrients.${node.index}`,
+  const { form: ingredientTableForm } = useIngredientTableForm();
+  const ingredient = useWatch({
+    control: ingredientTableForm.control,
+    name: `ingredients.${node.index}`,
   });
   const { update } = useFieldArray({
-    control: nutrientTableForm.control,
-    name: "nutrients",
+    control: ingredientTableForm.control,
+    name: "ingredients",
   });
-  const form = useForm<z.infer<typeof nutrientSchema>>({
-    resolver: zodResolver(nutrientSchema),
-    defaultValues: nutrient,
+  const form = useForm<z.infer<typeof ingredientSchema>>({
+    resolver: zodResolver(ingredientSchema),
+    defaultValues: ingredient,
   });
   const [open, setOpen] = useState(false);
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const { mutationFn } = useGraphQLMutation(updateNutrientMutation);
+  const { mutationFn } = useGraphQLMutation(updateIngredientMutation);
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully updated nutrient", {
+      toast("Successfully updated ingredient", {
         icon: <IconDeviceFloppy size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to update nutrient", {
+      toast("Failed to update ingredient", {
         icon: <IconDeviceFloppy size={18} />,
         description: error.message,
       });
@@ -278,11 +278,11 @@ function EditNutrientDialog({
   });
 
   useEffect(() => {
-    form.reset(nutrient);
-  }, [nutrient]);
+    form.reset(ingredient);
+  }, [ingredient]);
 
   const onSave = useCallback(
-    async (values: z.infer<typeof nutrientSchema>) => {
+    async (values: z.infer<typeof ingredientSchema>) => {
       await mutation.mutateAsync({
         input: {
           id: values.id,
@@ -309,61 +309,61 @@ function EditNutrientDialog({
       <DialogTrigger asChild>
         <Button className="space-x-2 flex items-center">
           <IconEdit size={18} />
-          <span>Edit Nutrient</span>
+          <span>Edit Ingredient</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-3">
-            <IconEdit size={22} /> <span>Edit Nutrient</span>
+            <IconEdit size={22} /> <span>Edit Ingredient</span>
           </DialogTitle>
           <DialogDescription>
-            Edit the nutrient name, description, and other details.
+            Edit the ingredient name, description, and other details.
           </DialogDescription>
         </DialogHeader>
-        <NutrientForm form={form} onSave={onSave} />
+        <IngredientForm form={form} onSave={onSave} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function EditNutrientCategoryDialog({
+function EditIngredientCategoryDialog({
   node,
   onOpenChange,
 }: {
-  node: NutrientTreeNode;
+  node: IngredientTreeNode;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const { form: nutrientTableForm } = useNutrientTableForm();
-  const nutrientCategory = useWatch({
-    control: nutrientTableForm.control,
+  const { form: ingredientTableForm } = useIngredientTableForm();
+  const ingredientCategory = useWatch({
+    control: ingredientTableForm.control,
     name: `categories.${node.index}`,
   });
   const { update } = useFieldArray({
-    control: nutrientTableForm.control,
+    control: ingredientTableForm.control,
     name: "categories",
   });
-  const form = useForm<z.infer<typeof nutrientCategorySchema>>({
-    resolver: zodResolver(nutrientCategorySchema),
-    defaultValues: nutrientCategory,
+  const form = useForm<z.infer<typeof ingredientCategorySchema>>({
+    resolver: zodResolver(ingredientCategorySchema),
+    defaultValues: ingredientCategory,
   });
   const [open, setOpen] = useState(false);
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const { mutationFn } = useGraphQLMutation(updateNutrientCategoryMutation);
+  const { mutationFn } = useGraphQLMutation(updateIngredientCategoryMutation);
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully updated nutrient category", {
+      toast("Successfully updated ingredient category", {
         icon: <IconDeviceFloppy size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to update nutrient category", {
+      toast("Failed to update ingredient category", {
         icon: <IconDeviceFloppy size={18} />,
         description: error.message,
       });
@@ -371,11 +371,11 @@ function EditNutrientCategoryDialog({
   });
 
   useEffect(() => {
-    form.reset(nutrientCategory);
-  }, [nutrientCategory]);
+    form.reset(ingredientCategory);
+  }, [ingredientCategory]);
 
   const onSave = useCallback(
-    async (values: z.infer<typeof nutrientCategorySchema>) => {
+    async (values: z.infer<typeof ingredientCategorySchema>) => {
       await mutation.mutateAsync({
         input: {
           id: values.id,
@@ -402,40 +402,40 @@ function EditNutrientCategoryDialog({
       <DialogTrigger asChild>
         <Button className="space-x-2 flex items-center">
           <IconEdit size={18} />
-          <span>Edit Nutrient Category</span>
+          <span>Edit Ingredient Category</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-3">
-            <IconEdit size={22} /> <span>Edit Nutrient Category</span>
+            <IconEdit size={22} /> <span>Edit Ingredient Category</span>
           </DialogTitle>
           <DialogDescription>
-            Edit the nutrient category name, description, and other details.
+            Edit the ingredient category name, description, and other details.
           </DialogDescription>
         </DialogHeader>
-        <NutrientCategoryForm form={form} onSave={onSave} />
+        <IngredientCategoryForm form={form} onSave={onSave} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function AddNutrientDialog({
-  nutrientCategoryId,
+function AddIngredientDialog({
+  ingredientCategoryId,
   onOpenChange,
 }: {
-  nutrientCategoryId?: string;
+  ingredientCategoryId?: string;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const { form: nutrientTableForm } = useNutrientTableForm();
+  const { form: ingredientTableForm } = useIngredientTableForm();
   const { append } = useFieldArray({
-    control: nutrientTableForm.control,
-    name: "nutrients",
+    control: ingredientTableForm.control,
+    name: "ingredients",
   });
-  const form = useForm<z.infer<typeof nutrientSchema>>({
-    resolver: zodResolver(nutrientSchema),
+  const form = useForm<z.infer<typeof ingredientSchema>>({
+    resolver: zodResolver(ingredientSchema),
     defaultValues: {
-      nutrient_category_id: nutrientCategoryId,
+      ingredient_category_id: ingredientCategoryId,
       id: crypto.randomUUID(),
       managed: false,
     },
@@ -443,20 +443,20 @@ function AddNutrientDialog({
   const [open, setOpen] = useState(false);
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const createNutrient = useGraphQLMutation(createNutrientMutation);
+  const createIngredient = useGraphQLMutation(createIngredientMutation);
   const mutation = useMutation({
-    ...createNutrient,
+    ...createIngredient,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully created nutrient", {
+      toast("Successfully created ingredient", {
         icon: <IconDeviceFloppy size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to create nutrient", {
+      toast("Failed to create ingredient", {
         icon: <IconDeviceFloppy size={18} />,
         description: error.message,
       });
@@ -464,17 +464,17 @@ function AddNutrientDialog({
   });
 
   const onSave = useCallback(
-    async (values: z.infer<typeof nutrientSchema>) => {
+    async (values: z.infer<typeof ingredientSchema>) => {
       const result = await mutation.mutateAsync({
         input: {
           name: values.name,
           description: values.description ?? null,
-          nutrientCategoryId: values.nutrient_category_id ?? null,
+          ingredientCategoryId: values.ingredient_category_id ?? null,
         },
       });
       append({
         ...values,
-        id: result.createNutrient.id,
+        id: result.createIngredient.id,
       });
       setOpen(false);
       onOpenChange?.(false);
@@ -493,65 +493,65 @@ function AddNutrientDialog({
       <DialogTrigger asChild>
         <Button className="space-x-2 flex items-center">
           <IconTestPipe size={18} />
-          <span>Add Nutrient</span>
+          <span>Add Ingredient</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="space-x-3 flex items-center">
             <IconTestPipe size={22} />
-            <span>Add Nutrient</span>
+            <span>Add Ingredient</span>
           </DialogTitle>
           <DialogDescription>
-            Add a new nutrient to the list of available nutrients to use in
+            Add a new ingredient to the list of available ingredients to use in
             diets.
           </DialogDescription>
         </DialogHeader>
-        <NutrientForm form={form} onSave={onSave} />
+        <IngredientForm form={form} onSave={onSave} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function AddNutrientCategoryDialog({
-  nutrientCategoryId,
+function AddIngredientCategoryDialog({
+  ingredientCategoryId,
   onOpenChange,
 }: {
-  nutrientCategoryId?: string;
+  ingredientCategoryId?: string;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const { form: nutrientTableForm } = useNutrientTableForm();
+  const { form: ingredientTableForm } = useIngredientTableForm();
   const { append } = useFieldArray({
-    control: nutrientTableForm.control,
+    control: ingredientTableForm.control,
     name: "categories",
   });
-  const form = useForm<z.infer<typeof nutrientCategorySchema>>({
-    resolver: zodResolver(nutrientCategorySchema),
+  const form = useForm<z.infer<typeof ingredientCategorySchema>>({
+    resolver: zodResolver(ingredientCategorySchema),
     defaultValues: {
       id: crypto.randomUUID(),
-      parent_id: nutrientCategoryId,
+      parent_id: ingredientCategoryId,
       managed: false,
     },
   });
   const [open, setOpen] = useState(false);
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const createNutrientCategory = useGraphQLMutation(
-    createNutrientCategoryMutation
+  const createIngredientCategory = useGraphQLMutation(
+    createIngredientCategoryMutation
   );
   const mutation = useMutation({
-    ...createNutrientCategory,
+    ...createIngredientCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully created nutrient category", {
+      toast("Successfully created ingredient category", {
         icon: <IconDeviceFloppy size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to create nutrient category", {
+      toast("Failed to create ingredient category", {
         icon: <IconDeviceFloppy size={18} />,
         description: error.message,
       });
@@ -559,17 +559,17 @@ function AddNutrientCategoryDialog({
   });
 
   const onSave = useCallback(
-    async (values: z.infer<typeof nutrientCategorySchema>) => {
+    async (values: z.infer<typeof ingredientCategorySchema>) => {
       const result = await mutation.mutateAsync({
         input: {
           name: values.name,
           description: values.description ?? null,
-          parentNutrientCategoryId: values.parent_id ?? null,
+          parentIngredientCategoryId: values.parent_id ?? null,
         },
       });
       append({
         ...values,
-        id: result.createNutrientCategory.id,
+        id: result.createIngredientCategory.id,
       });
       setOpen(false);
       onOpenChange?.(false);
@@ -588,29 +588,29 @@ function AddNutrientCategoryDialog({
       <DialogTrigger asChild>
         <Button className="space-x-2 flex items-center">
           <IconCategory size={18} />
-          <span>Add Nutrient Category</span>
+          <span>Add Ingredient Category</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="space-x-3 flex items-center">
             <IconCategory size={22} />
-            <span>Add Nutrient Category</span>
+            <span>Add Ingredient Category</span>
           </DialogTitle>
           <DialogDescription>
-            Add a new nutrient category to organize nutrients.
+            Add a new ingredient category to organize ingredients.
           </DialogDescription>
         </DialogHeader>
-        <NutrientCategoryForm form={form} onSave={onSave} />
+        <IngredientCategoryForm form={form} onSave={onSave} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function AddNutrientOrCategory({
-  nutrientCategoryId,
+function AddIngredientOrCategory({
+  ingredientCategoryId,
 }: {
-  nutrientCategoryId?: string;
+  ingredientCategoryId?: string;
 }) {
   return (
     <Popover>
@@ -621,46 +621,48 @@ function AddNutrientOrCategory({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="flex flex-col space-y-1" align="start">
-        <AddNutrientDialog nutrientCategoryId={nutrientCategoryId} />
-        <AddNutrientCategoryDialog nutrientCategoryId={nutrientCategoryId} />
+        <AddIngredientDialog ingredientCategoryId={ingredientCategoryId} />
+        <AddIngredientCategoryDialog
+          ingredientCategoryId={ingredientCategoryId}
+        />
       </PopoverContent>
     </Popover>
   );
 }
 
-export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
+export function IngredientCategoryRow({ node }: { node: IngredientTreeNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
-  const { form, index: childIndex } = useNutrientTableForm();
+  const { form, index: childIndex } = useIngredientTableForm();
   const { remove: categoryRemove } = useFieldArray({
     control: form.control,
     name: "categories",
   });
-  const { remove: nutrientRemove } = useFieldArray({
+  const { remove: ingredientRemove } = useFieldArray({
     control: form.control,
-    name: "nutrients",
+    name: "ingredients",
   });
-  const nutrientCategories = useWatch({
+  const ingredientCategories = useWatch({
     control: form.control,
     name: "categories",
   });
-  const nutrientCategory = nutrientCategories[node.index];
+  const ingredientCategory = ingredientCategories[node.index];
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const { mutationFn } = useGraphQLMutation(deleteNutrientCategoryMutation);
+  const { mutationFn } = useGraphQLMutation(deleteIngredientCategoryMutation);
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully deleted nutrient category", {
+      toast("Successfully deleted ingredient category", {
         icon: <IconTrash size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to delete nutrient category", {
+      toast("Failed to delete ingredient category", {
         icon: <IconTrash size={18} />,
         description: error.message,
       });
@@ -668,7 +670,7 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
   });
   const [deleteDisabled, setDeleteDisabled] = useState(false);
 
-  const removeNutrientCategory = useCallback(async () => {
+  const removeIngredientCategory = useCallback(async () => {
     // request the backend to delete
     setDeleteDisabled(true);
     try {
@@ -680,7 +682,7 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
 
       // remove the category and all its recursive dependencies
       const categoryRemoveSet = new Set<number>();
-      const nutrientRemoveSet = new Set<number>();
+      const ingredientRemoveSet = new Set<number>();
       const parentSet = new Set<number>();
       const fringeSet = new Set<string>();
       parentSet.add(node.index);
@@ -697,29 +699,29 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
             categoryRemoveSet.add(child.index);
             fringeSet.add(child.id);
           } else {
-            nutrientRemoveSet.add(child.index);
+            ingredientRemoveSet.add(child.index);
           }
         }
       }
 
       console.log({
         categoryRemoveSet,
-        nutrientRemoveSet,
+        ingredientRemoveSet,
       });
-      // remove the nutrients first
-      nutrientRemove(Array.from(nutrientRemoveSet));
+      // remove the ingredients first
+      ingredientRemove(Array.from(ingredientRemoveSet));
       // then remove the categories
       categoryRemove(Array.from(categoryRemoveSet));
     } finally {
       setDeleteDisabled(false);
     }
-  }, [nutrientRemove, categoryRemove, node.index, childIndex]);
+  }, [ingredientRemove, categoryRemove, node.index, childIndex]);
 
-  if (!nutrientCategory || nutrientCategory.id !== node.id) {
+  if (!ingredientCategory || ingredientCategory.id !== node.id) {
     return null;
   }
 
-  const children = childIndex.get(nutrientCategory.id) ?? [];
+  const children = childIndex.get(ingredientCategory.id) ?? [];
 
   return (
     <div>
@@ -741,10 +743,10 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
           <div className="grid grid-cols-5 flex-1 gap-2">
             <div className="flex space-x-2 items-center">
               <IconCategory size={16} />
-              <div className="font-medium">{nutrientCategory.name}</div>
+              <div className="font-medium">{ingredientCategory.name}</div>
             </div>
             <div className="font-medium text-primary/70 col-span-4">
-              {nutrientCategory.description}
+              {ingredientCategory.description}
             </div>
           </div>
           <Popover open={open} onOpenChange={setOpen}>
@@ -754,20 +756,23 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="flex flex-col space-y-1" align="start">
-              <EditNutrientCategoryDialog node={node} onOpenChange={setOpen} />
-              <AddNutrientDialog
-                nutrientCategoryId={nutrientCategory.id}
+              <EditIngredientCategoryDialog
+                node={node}
                 onOpenChange={setOpen}
               />
-              <AddNutrientCategoryDialog
-                nutrientCategoryId={nutrientCategory.id}
+              <AddIngredientDialog
+                ingredientCategoryId={ingredientCategory.id}
                 onOpenChange={setOpen}
               />
-              {!nutrientCategory.managed && (
+              <AddIngredientCategoryDialog
+                ingredientCategoryId={ingredientCategory.id}
+                onOpenChange={setOpen}
+              />
+              {!ingredientCategory.managed && (
                 <Button
                   variant="destructive"
                   className="flex space-x-2 items-center"
-                  onClick={removeNutrientCategory}
+                  onClick={removeIngredientCategory}
                   disabled={deleteDisabled}
                 >
                   <IconTrash size={18} />
@@ -788,11 +793,11 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
       >
         <div className="overflow-hidden">
           {children.map((childNode) => {
-            if (childNode.type === "nutrient") {
-              return <NutrientRow key={childNode.id} node={childNode} />;
+            if (childNode.type === "ingredient") {
+              return <IngredientRow key={childNode.id} node={childNode} />;
             } else {
               return (
-                <NutrientCategoryRow key={childNode.id} node={childNode} />
+                <IngredientCategoryRow key={childNode.id} node={childNode} />
               );
             }
           })}
@@ -802,42 +807,42 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
   );
 }
 
-export function NutrientRow({ node }: { node: NutrientTreeNode }) {
-  const { form } = useNutrientTableForm();
+export function IngredientRow({ node }: { node: IngredientTreeNode }) {
+  const { form } = useIngredientTableForm();
   const { remove } = useFieldArray({
     control: form.control,
-    name: "nutrients",
+    name: "ingredients",
   });
-  const nutrients = useWatch({
+  const ingredients = useWatch({
     control: form.control,
-    name: "nutrients",
+    name: "ingredients",
   });
-  const nutrient = nutrients[node.index];
+  const ingredient = ingredients[node.index];
   const [open, setOpen] = useState(false);
   const [deleteDisabled, setDeleteDisabled] = useState(false);
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const { mutationFn } = useGraphQLMutation(deleteNutrientMutation);
+  const { mutationFn } = useGraphQLMutation(deleteIngredientMutation);
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+        queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully deleted nutrient", {
+      toast("Successfully deleted ingredient", {
         icon: <IconTrash size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to delete nutrient", {
+      toast("Failed to delete ingredient", {
         icon: <IconTrash size={18} />,
         description: error.message,
       });
     },
   });
 
-  const removeNutrient = useCallback(async () => {
+  const removeIngredient = useCallback(async () => {
     setDeleteDisabled(true);
     try {
       await mutation.mutateAsync({
@@ -851,7 +856,7 @@ export function NutrientRow({ node }: { node: NutrientTreeNode }) {
     }
   }, [remove, node.index, node.id]);
 
-  if (!nutrient || nutrient.id !== node.id) {
+  if (!ingredient || ingredient.id !== node.id) {
     return null;
   }
 
@@ -860,9 +865,9 @@ export function NutrientRow({ node }: { node: NutrientTreeNode }) {
       <div className="grid grid-cols-5 gap-2 flex-1">
         <div className="flex space-x-2 items-center">
           <IconTestPipe size={16} />
-          <p>{nutrient.name}</p>
+          <p>{ingredient.name}</p>
         </div>
-        <p className="text-primary/70 col-span-4">{nutrient.description}</p>
+        <p className="text-primary/70 col-span-4">{ingredient.description}</p>
       </div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -871,12 +876,12 @@ export function NutrientRow({ node }: { node: NutrientTreeNode }) {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="flex flex-col space-y-1" align="start">
-          <EditNutrientDialog node={node} onOpenChange={setOpen} />
-          {!nutrient.managed && (
+          <EditIngredientDialog node={node} onOpenChange={setOpen} />
+          {!ingredient.managed && (
             <Button
               variant="destructive"
               className="flex space-x-2 items-center"
-              onClick={removeNutrient}
+              onClick={removeIngredient}
               disabled={deleteDisabled}
             >
               <IconTrash size={18} />
@@ -889,52 +894,52 @@ export function NutrientRow({ node }: { node: NutrientTreeNode }) {
   );
 }
 
-function NutrientTableForm({
+function IngredientTableForm({
   data,
 }: {
-  data: GetAllNutrientsAndCategoriesQuery;
+  data: GetAllIngredientsAndCategoriesQuery;
 }) {
-  const form = useForm<z.infer<typeof nutrientFormSchema>>({
-    resolver: zodResolver(nutrientFormSchema),
+  const form = useForm<z.infer<typeof ingredientFormSchema>>({
+    resolver: zodResolver(ingredientFormSchema),
     defaultValues: {
-      categories: data.nutrientCategories.edges
+      categories: data.ingredientCategories.edges
         .map((edge) => edge.node)
         .map((node) => ({
           id: node.id,
           name: node.name,
           description: node.description ?? undefined,
-          parent_id: node.parentNutrientCategoryId,
+          parent_id: node.parentIngredientCategoryId,
           managed: node.managed,
         })),
-      nutrients: data.nutrients.edges
+      ingredients: data.ingredients.edges
         .map((edge) => edge.node)
         .map((node) => ({
           id: node.id,
           name: node.name,
           description: node.description ?? undefined,
-          nutrient_category_id: node.nutrientCategoryId,
+          ingredient_category_id: node.ingredientCategoryId,
           managed: node.managed,
         })),
     },
   });
-  const [index, setIndex] = useState<Map<string, Array<NutrientTreeNode>>>(
+  const [index, setIndex] = useState<Map<string, Array<IngredientTreeNode>>>(
     new Map()
   );
-  const [nutrientsValues, categoriesValues] = useWatch({
+  const [ingredientsValues, categoriesValues] = useWatch({
     control: form.control,
-    name: ["nutrients", "categories"],
+    name: ["ingredients", "categories"],
   });
 
   useEffect(() => {
-    const newIndex = new Map<string, Array<NutrientTreeNode>>();
-    nutrientsValues.forEach((nutrient, i) => {
-      const key = nutrient.nutrient_category_id ?? "root";
+    const newIndex = new Map<string, Array<IngredientTreeNode>>();
+    ingredientsValues.forEach((ingredient, i) => {
+      const key = ingredient.ingredient_category_id ?? "root";
       const existing = newIndex.get(key) ?? [];
       existing.push({
-        type: "nutrient",
-        name: nutrient.name,
+        type: "ingredient",
+        name: ingredient.name,
         index: i,
-        id: nutrient.id,
+        id: ingredient.id,
       });
       newIndex.set(key, existing);
     });
@@ -964,36 +969,36 @@ function NutrientTableForm({
     console.log({ newIndex });
 
     setIndex(newIndex);
-  }, [nutrientsValues, categoriesValues, setIndex]);
+  }, [ingredientsValues, categoriesValues, setIndex]);
 
   const rootNodes = index.get("root") ?? [];
 
   return (
     <Form {...form}>
-      <NutrientTableFormContext.Provider value={{ form, index, setIndex }}>
+      <IngredientTableFormContext.Provider value={{ form, index, setIndex }}>
         <div className="space-y-4">
           <div>
             {rootNodes.map((node) => {
-              if (node.type === "nutrient") {
-                return <NutrientRow key={node.id} node={node} />;
+              if (node.type === "ingredient") {
+                return <IngredientRow key={node.id} node={node} />;
               } else {
-                return <NutrientCategoryRow key={node.id} node={node} />;
+                return <IngredientCategoryRow key={node.id} node={node} />;
               }
             })}
           </div>
-          <AddNutrientOrCategory />
+          <AddIngredientOrCategory />
         </div>
-      </NutrientTableFormContext.Provider>
+      </IngredientTableFormContext.Provider>
     </Form>
   );
 }
 
-export function NutrientTable() {
+export function IngredientTable() {
   const { orgId, isLoaded } = useAuth();
-  const { queryFn } = useGraphQLQuery(getAllNutrientsQuery);
+  const { queryFn } = useGraphQLQuery(getAllIngredientsQuery);
   const { data, status } = useQuery({
     queryFn,
-    queryKey: getAllNutrientsKey({ orgId: orgId ?? "" }),
+    queryKey: getAllIngredientsKey({ orgId: orgId ?? "" }),
     enabled: isLoaded,
   });
 
@@ -1007,9 +1012,9 @@ export function NutrientTable() {
 
   if (status === "error") {
     return (
-      <p className="text-destructive">Error occurred fetching nutrients</p>
+      <p className="text-destructive">Error occurred fetching ingredients</p>
     );
   }
 
-  return <NutrientTableForm data={data} />;
+  return <IngredientTableForm data={data} />;
 }
