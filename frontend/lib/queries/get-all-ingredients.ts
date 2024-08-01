@@ -10,6 +10,16 @@ query GetAllIngredientsAndCategories {
         description
         managed
         ingredientCategoryId
+        nutrients {
+          edges {
+            node {
+              nutrient {
+                id
+                name
+              }
+            }
+          }
+        }
       }
     }
   }

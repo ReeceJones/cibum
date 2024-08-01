@@ -133,7 +133,13 @@ async def delete_ingredient_category(
             while len(children) > 0:
                 child = children.pop()
                 db.expire(child, ["child_ingredient_categories", "ingredients"])
-                await db.refresh(child)
+                await db.refresh(
+                    child,
+                    [
+                        "child_ingredient_categories",
+                        "ingredients",
+                    ],
+                )
                 children.extend(child.child_ingredient_categories)
                 child.archived = True
                 for ingredient in child.ingredients:

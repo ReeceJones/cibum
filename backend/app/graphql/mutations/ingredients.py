@@ -1,3 +1,5 @@
+from sqlalchemy import or_, select
+
 from app import models
 from app.db import DB
 from app.graphql import context, schemas, utils
@@ -12,6 +14,29 @@ async def create_ingredient(
         raise AuthError
 
     async with DB.async_session() as db:
+        nutrient_ids = (
+            []
+            if not utils.is_value(input.nutrients)
+            else [int(n.nutrient_id.node_id) for n in input.nutrients]
+        )
+
+        nutrients = await db.scalars(
+            select(models.Nutrient.id).where(
+                models.Nutrient.id.in_(nutrient_ids),
+                or_(
+                    models.Nutrient.organization_id == None,
+                    models.Nutrient.organization_id == info.context.user.org_id,
+                    models.Nutrient.archived == False,
+                ),
+            )
+        )
+
+        if set(nutrient_ids) != set(nutrients):
+            raise Exception(
+                f"Could not find nutrients {set(nutrient_ids) - set(nutrients)}"
+            )
+
+        # add ingredient
         ingredient = models.Ingredient(
             organization_id=info.context.user.org_id,
             ingredient_category_id=(
@@ -23,6 +48,18 @@ async def create_ingredient(
             description=input.description,
         )
         db.add(ingredient)
+        await db.flush()
+
+        # add nutrients
+        for nutrient_id in nutrient_ids:
+            db.add(
+                models.IngredientNutrient(
+                    ingredient_id=ingredient.id,
+                    nutrient_id=nutrient_id,
+                    organization_id=info.context.user.org_id,
+                )
+            )
+
         await db.commit()
 
         return schemas.Ingredient.from_model(ingredient, None)
@@ -99,6 +136,56 @@ async def update_ingredient(
                     ingredient.ingredient_category_id = int(
                         input.ingredient_category_id.node_id
                     )
+
+        if utils.is_set(input.nutrients):
+            # update nutrients
+            ingredient_nutrients = await db.scalars(
+                select(models.IngredientNutrient).where(
+                    models.IngredientNutrient.ingredient_id == ingredient.id,
+                    models.IngredientNutrient.organization_id
+                    == info.context.user.org_id,
+                    models.IngredientNutrient.archived == False,
+                )
+            )
+
+            # update existing nutrient join table
+            nutrient_inputs = (
+                {int(n.nutrient_id.node_id): n for n in input.nutrients}
+                if utils.is_value(input.nutrients)
+                else {}
+            )
+
+            for join in ingredient_nutrients:
+                if join.nutrient_id not in nutrient_inputs:
+                    join.archived = True
+                else:
+                    del nutrient_inputs[join.nutrient_id]
+
+            nutrients = await db.scalars(
+                select(models.Nutrient.id).where(
+                    models.Nutrient.id.in_(nutrient_inputs.keys()),
+                    or_(
+                        models.Nutrient.organization_id == None,
+                        models.Nutrient.organization_id == info.context.user.org_id,
+                        models.Nutrient.archived == False,
+                    ),
+                )
+            )
+
+            if set(nutrient_inputs.keys()) != set(nutrients):
+                raise Exception(
+                    f"Could not find nutrients {set(nutrient_inputs.keys()) - set(nutrients)}"
+                )
+
+            # add new nutrient join table
+            for join in nutrient_inputs.values():
+                db.add(
+                    models.IngredientNutrient(
+                        ingredient_id=ingredient.id,
+                        nutrient_id=int(join.nutrient_id.node_id),
+                        organization_id=info.context.user.org_id,
+                    )
+                )
 
         await db.commit()
 

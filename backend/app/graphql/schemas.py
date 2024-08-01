@@ -124,6 +124,37 @@ class NutrientCategory(relay.Node):
 
 
 @strawberry.type
+class IngredientNutrient(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    ingredient_id: relay.GlobalID
+    nutrient_id: relay.GlobalID
+    organization_id: str
+
+    @strawberry.field
+    async def nutrient(self, info: Info) -> Nutrient:
+        return await info.context.loaders.nutrient.load(int(self.nutrient_id.node_id))
+
+    @staticmethod
+    def from_model(
+        ingredient_nutrient: models.IngredientNutrient,
+    ) -> "IngredientNutrient":
+        return IngredientNutrient(
+            id=strawberry_id(
+                ",".join(
+                    (
+                        str(ingredient_nutrient.ingredient_id),
+                        str(ingredient_nutrient.nutrient_id),
+                        str(ingredient_nutrient.organization_id),
+                    )
+                )
+            ),
+            ingredient_id=global_id(Ingredient, ingredient_nutrient.ingredient_id),
+            nutrient_id=global_id(Nutrient, ingredient_nutrient.nutrient_id),
+            organization_id=ingredient_nutrient.organization_id,
+        )
+
+
+@strawberry.type
 class Ingredient(relay.Node):
     id: relay.NodeID[strawberry.ID]
     ingredient_category_id: relay.GlobalID | None
@@ -138,6 +169,12 @@ class Ingredient(relay.Node):
 
         return await info.context.loaders.ingredient_category.load(
             int(self.ingredient_category_id.node_id)
+        )
+
+    @relay.connection(relay.ListConnection[IngredientNutrient])
+    async def nutrients(self, info: Info) -> list[IngredientNutrient]:
+        return await resolvers.ingredients.resolve_ingredient_nutrients(
+            info, int(self.id)
         )
 
     @staticmethod
@@ -290,10 +327,16 @@ class UpdateIngredientCategoryInput:
 
 
 @strawberry.input
+class IngredientNutrientInput:
+    nutrient_id: relay.GlobalID
+
+
+@strawberry.input
 class CreateIngredientInput:
     ingredient_category_id: relay.GlobalID | None
     name: str
     description: str | None
+    nutrients: list[IngredientNutrientInput] | None
 
 
 @strawberry.input
@@ -302,6 +345,7 @@ class UpdateIngredientInput:
     ingredient_category_id: relay.GlobalID | None = strawberry.UNSET
     name: str | None = strawberry.UNSET
     description: str | None = strawberry.UNSET
+    nutrients: list[IngredientNutrientInput] | None = strawberry.UNSET
 
 
 @strawberry.type

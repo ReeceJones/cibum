@@ -25,6 +25,7 @@ export type CreateIngredientInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
   name: Scalars['String']['input'];
+  nutrients?: InputMaybe<Array<IngredientNutrientInput>>;
 };
 
 export type CreateNutrientCategoryInput = {
@@ -57,6 +58,15 @@ export type Ingredient = Node & {
   ingredientCategoryId?: Maybe<Scalars['GlobalID']['output']>;
   managed: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  nutrients: IngredientNutrientConnection;
+};
+
+
+export type IngredientNutrientsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type IngredientCategory = Node & {
@@ -106,6 +116,38 @@ export type IngredientEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge */
   node: Ingredient;
+};
+
+export type IngredientNutrient = Node & {
+  __typename?: 'IngredientNutrient';
+  /** The Globally Unique ID of this object */
+  id: Scalars['GlobalID']['output'];
+  ingredientId: Scalars['GlobalID']['output'];
+  nutrient: Nutrient;
+  nutrientId: Scalars['GlobalID']['output'];
+  organizationId: Scalars['String']['output'];
+};
+
+/** A connection to a list of items. */
+export type IngredientNutrientConnection = {
+  __typename?: 'IngredientNutrientConnection';
+  /** Contains the nodes in this connection */
+  edges: Array<IngredientNutrientEdge>;
+  /** Pagination data for this connection */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type IngredientNutrientEdge = {
+  __typename?: 'IngredientNutrientEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: IngredientNutrient;
+};
+
+export type IngredientNutrientInput = {
+  nutrientId: Scalars['GlobalID']['input'];
 };
 
 export type Mutation = {
@@ -322,6 +364,7 @@ export type UpdateIngredientInput = {
   id: Scalars['GlobalID']['input'];
   ingredientCategoryId?: InputMaybe<Scalars['GlobalID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  nutrients?: InputMaybe<Array<IngredientNutrientInput>>;
 };
 
 export type UpdateNutrientCategoryInput = {

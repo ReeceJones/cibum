@@ -31,7 +31,7 @@ import {
   IconDotsVertical,
   IconEdit,
   IconPlus,
-  IconTestPipe,
+  IconSeeding,
   IconTrash,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -492,14 +492,14 @@ function AddIngredientDialog({
     >
       <DialogTrigger asChild>
         <Button className="space-x-2 flex items-center">
-          <IconTestPipe size={18} />
+          <IconSeeding size={18} />
           <span>Add Ingredient</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="space-x-3 flex items-center">
-            <IconTestPipe size={22} />
+            <IconSeeding size={22} />
             <span>Add Ingredient</span>
           </DialogTitle>
           <DialogDescription>
@@ -864,7 +864,7 @@ export function IngredientRow({ node }: { node: IngredientTreeNode }) {
     <div className="flex space-x-2 hover:bg-muted/50 items-center transition-colors p-2 rounded-md">
       <div className="grid grid-cols-5 gap-2 flex-1">
         <div className="flex space-x-2 items-center">
-          <IconTestPipe size={16} />
+          <IconSeeding size={16} />
           <p>{ingredient.name}</p>
         </div>
         <p className="text-primary/70 col-span-4">{ingredient.description}</p>
