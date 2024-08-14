@@ -1,10 +1,13 @@
-from typing import Type, TypeGuard, TypeVar, Union
+from typing import (Callable, Iterable, Optional, Type, TypeGuard, TypeVar,
+                    Union)
 
 import strawberry
 from strawberry import relay
 from strawberry.types import unset
 
 T = TypeVar("T")
+K = TypeVar("K")
+Q = TypeVar("Q")
 
 
 def strawberry_id(id: str | int) -> strawberry.ID:
@@ -31,3 +34,25 @@ def is_value(value: Union[T, unset.UnsetType, None]) -> TypeGuard[T]:
     Check if a value is set and not None
     """
     return value is not strawberry.UNSET and value is not None
+
+
+def make_relay_result(
+    nodes: Iterable[T],
+    models: Iterable[K],
+    required: bool,
+    key: Callable[[K], T],
+    conv: Callable[[K], Q],
+) -> list[Optional[Q]]:
+
+    results: list[Optional[Q]] = []
+    models_dict: dict[T, K] = {key(x): x for x in models}
+
+    for node in nodes:
+        if (model := models_dict.get(node)) is not None:
+            results.append(conv(model))
+        else:
+            if required:
+                raise Exception(f"Model with ID {node} not found")
+            results.append(None)
+
+    return results

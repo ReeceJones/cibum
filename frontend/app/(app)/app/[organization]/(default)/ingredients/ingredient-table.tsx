@@ -53,7 +53,7 @@ import {
   ingredientCategorySchema,
   ingredientFormSchema,
   ingredientSchema,
-} from "./form-schema";
+} from "@/lib/schemas/ingredients";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -755,7 +755,7 @@ export function IngredientCategoryRow({ node }: { node: IngredientTreeNode }) {
                 <IconDotsVertical size={16} />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="flex flex-col space-y-1" align="start">
+            <PopoverContent className="flex flex-col space-y-1" align="end">
               <EditIngredientCategoryDialog
                 node={node}
                 onOpenChange={setOpen}
@@ -875,7 +875,7 @@ export function IngredientRow({ node }: { node: IngredientTreeNode }) {
             <IconDotsVertical size={16} />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="flex flex-col space-y-1" align="start">
+        <PopoverContent className="flex flex-col space-y-1" align="end">
           <EditIngredientDialog node={node} onOpenChange={setOpen} />
           {!ingredient.managed && (
             <Button

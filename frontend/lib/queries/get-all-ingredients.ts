@@ -10,16 +10,6 @@ query GetAllIngredientsAndCategories {
         description
         managed
         ingredientCategoryId
-        nutrients {
-          edges {
-            node {
-              nutrient {
-                id
-                name
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -42,5 +32,5 @@ export function getAllIngredientsKey({
 }: {
   orgId: string;
 }) {
-  return ["GetAllIngredients", orgId];
+  return ["GetAllIngredients", {orgId}];
 }

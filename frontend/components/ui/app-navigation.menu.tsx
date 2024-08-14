@@ -10,7 +10,7 @@ import {
   organizationDietsRoute,
   organizationIngredientsRoute,
   organizationNutritionRoute,
-  organizationConstraintsRoute,
+  organizationProfilesRoute as organizationProfilesRoute,
   organizationRoute,
 } from "@/lib/routes/organization";
 import { OrganizationSwitcher, useAuth, UserButton } from "@clerk/nextjs";
@@ -49,14 +49,14 @@ export function AppNavigationMenu() {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link
-                    href={organizationConstraintsRoute({ slug: orgSlug })}
+                    href={organizationProfilesRoute({ slug: orgSlug })}
                     legacyBehavior
                     passHref
                   >
                     <NavigationMenuLink
                       className={navigationMenuTriggerStyle()}
                     >
-                      Constraints
+                      Profiles
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>

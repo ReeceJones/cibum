@@ -118,29 +118,3 @@ async def resolve_child_ingredients(
             schemas.Ingredient.from_model(ingredient, override)
             for ingredient, override in ingredients
         ]
-
-
-async def resolve_ingredient_nutrients(
-    info: "context.Info",
-    id: int,
-) -> list["schemas.IngredientNutrient"]:
-    if not context.has_org(info.context.user):
-        raise AuthError
-
-    async with DB.async_session() as db:
-        join_nutrients = await db.scalars(
-            select(models.IngredientNutrient)
-            .join(models.Nutrient)
-            .where(
-                models.IngredientNutrient.ingredient_id == id,
-                or_(
-                    models.Nutrient.organization_id == None,
-                    models.Nutrient.organization_id == info.context.user.org_id,
-                ),
-                models.IngredientNutrient.organization_id == info.context.user.org_id,
-                models.IngredientNutrient.archived == False,
-                models.Nutrient.archived == False,
-            )
-        )
-
-        return [schemas.IngredientNutrient.from_model(x) for x in join_nutrients]

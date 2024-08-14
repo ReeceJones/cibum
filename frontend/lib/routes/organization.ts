@@ -14,8 +14,8 @@ export function organizationIngredientsRoute(params: OrganizationRouteParams): s
   return `/app/${params.slug}/ingredients`;
 }
 
-export function organizationConstraintsRoute(params: OrganizationRouteParams): string {
-  return `/app/${params.slug}/constraints`;
+export function organizationProfilesRoute(params: OrganizationRouteParams): string {
+  return `/app/${params.slug}/profiles`;
 }
 
 export function organizationDietsRoute(params: OrganizationRouteParams): string {

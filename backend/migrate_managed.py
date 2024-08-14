@@ -26,7 +26,14 @@ class ManagedIngredientNode(BaseModel):
     name: str
     description: str | None = None
     children: list["ManagedIngredientNode"] | None = None
-    # ingredients: list["ManagedIngredientNode"] | None = None
+
+
+class ManagedUnitNode(BaseModel):
+    id: str
+    name: str
+    symbol: str
+    kilogram_multiplier: float
+    kilogram_offset: float
 
 
 async def migrate_managed_nutrient_category(
@@ -47,6 +54,7 @@ async def migrate_managed_nutrient_category(
             description=node.description,
             parent_nutrient_category_id=parent_id,
             managed=True,
+            managed_key=node.key,
         )
         db.add(new_category)
         await db.flush()
@@ -79,6 +87,7 @@ async def migrate_managed_nutrient(
             description=node.description,
             nutrient_category_id=parent_id,
             managed=True,
+            managed_key=node.key,
         )
         db.add(new_nutrient)
         await db.flush()
@@ -139,6 +148,7 @@ async def migrate_managed_ingredient_category(
             description=node.description,
             parent_ingredient_category_id=parent_id,
             managed=True,
+            managed_key=node.key,
         )
         db.add(new_category)
         await db.flush()
@@ -171,6 +181,7 @@ async def migrate_managed_ingredient(
             description=node.description,
             ingredient_category_id=parent_id,
             managed=True,
+            managed_key=node.key,
         )
         db.add(new_ingredient)
         await db.flush()
@@ -213,9 +224,30 @@ async def run_ingredient_migrations() -> None:
         await db.commit()
 
 
+async def run_unit_migrations() -> None:
+    logging.info("Migrating managed units")
+    async with aiofiles.open("data/managed_units.json", "r") as f:
+        unit_data_json = await f.read()
+    unit_data = json.loads(unit_data_json)
+
+    async with DB.async_session() as db:
+        for unit_raw in unit_data:
+            unit = ManagedUnitNode(**unit_raw)
+            node = models.Unit(
+                id=unit.id,
+                name=unit.name,
+                symbol=unit.symbol,
+                kilogram_multiplier=unit.kilogram_multiplier,
+                kilogram_offset=unit.kilogram_offset,
+            )
+            await db.merge(node)
+        await db.commit()
+
+
 async def main():
     await run_nutrient_migrations()
     await run_ingredient_migrations()
+    await run_unit_migrations()
 
 
 if __name__ == "__main__":

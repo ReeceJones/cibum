@@ -53,7 +53,7 @@ import {
   nutrientCategorySchema,
   nutrientFormSchema,
   nutrientSchema,
-} from "./form-schema";
+} from "@/lib/schemas/nutrients";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {

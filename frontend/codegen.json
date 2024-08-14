@@ -6,9 +6,7 @@
   ],
   "generates": {
     "./lib/gql/": {
-      "preset": "client"
-    },
-    "./types/graphql.ts": {
+      "preset": "client",
       "plugins": ["typescript"]
     }
   }

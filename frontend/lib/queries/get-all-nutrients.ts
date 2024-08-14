@@ -32,5 +32,5 @@ export function getAllNutrientsKey({
 }: {
   orgId: string;
 }) {
-  return ["GetAllNutrients", orgId];
+  return ["GetAllNutrients", {orgId}];
 }

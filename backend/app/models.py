@@ -91,10 +91,6 @@ class Nutrient(Base):
         "ManagedNutrientOverride",
         back_populates="nutrient",
     )
-    ingredient_nutrients: Mapped[list["IngredientNutrient"]] = relationship(
-        "IngredientNutrient",
-        back_populates="nutrient",
-    )
 
 
 class ManagedNutrientCategoryOverride(Base):
@@ -178,27 +174,6 @@ class ManagedIngredientCategoryOverride(Base):
     )
 
 
-class IngredientNutrient(Base):
-    ingredient_id: Mapped[int] = mapped_column(
-        ForeignKey("ingredient.id"), primary_key=True
-    )
-    nutrient_id: Mapped[int] = mapped_column(
-        ForeignKey("nutrient.id"), primary_key=True
-    )
-    organization_id: Mapped[str] = mapped_column(
-        ForeignKey("organization.id"), primary_key=True
-    )
-
-    ingredient: Mapped["Ingredient"] = relationship(
-        "Ingredient",
-        back_populates="ingredient_nutrients",
-    )
-    nutrient: Mapped[Nutrient] = relationship(
-        "Nutrient",
-        back_populates="ingredient_nutrients",
-    )
-
-
 class Ingredient(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     organization_id: Mapped[str | None] = mapped_column(ForeignKey("organization.id"))
@@ -220,10 +195,6 @@ class Ingredient(Base):
             back_populates="ingredient",
         )
     )
-    ingredient_nutrients: Mapped[list[IngredientNutrient]] = relationship(
-        "IngredientNutrient",
-        back_populates="ingredient",
-    )
 
 
 class ManagedIngredientOverride(Base):
@@ -239,4 +210,113 @@ class ManagedIngredientOverride(Base):
     ingredient: Mapped[Ingredient] = relationship(
         "Ingredient",
         back_populates="managed_ingredient_overrides",
+    )
+
+
+class Unit(Base):
+    id: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(index=True)
+    symbol: Mapped[str] = mapped_column(index=True)
+    kilogram_multiplier: Mapped[float] = mapped_column(default=1.0)
+    kilogram_offset: Mapped[float] = mapped_column(default=0.0)
+
+
+class ProfilePandalistRule(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    scope: Mapped[str]
+    mode: Mapped[str]
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_pandalist_rules"
+    )
+
+
+class ProfileIngredientNutrientValue(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"))
+    nutrient_id: Mapped[int] = mapped_column(ForeignKey("nutrient.id"))
+    value: Mapped[float]
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_ingredient_nutrient_values"
+    )
+
+
+class ProfileIngredientConstraint(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"))
+    mode: Mapped[str]
+    operator: Mapped[str]
+    literal_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    literal_value: Mapped[float | None]
+    reference_ingredient_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ingredient.id")
+    )
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_ingredient_constraints"
+    )
+
+
+class ProfileNutrientConstraint(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    nutrient_id: Mapped[int] = mapped_column(ForeignKey("nutrient.id"))
+    mode: Mapped[str]
+    operator: Mapped[str]
+    literal_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    literal_value: Mapped[float | None]
+    reference_nutrient_id: Mapped[int | None] = mapped_column(ForeignKey("nutrient.id"))
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_nutrient_constraints"
+    )
+
+
+class ProfileConstraint(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_constraints"
+    )
+
+
+class Profile(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[str | None] = mapped_column(ForeignKey("organization.id"))
+    managed: Mapped[bool] = mapped_column(default=False)
+    managed_key: Mapped[str | None] = mapped_column(index=True)
+    name: Mapped[str] = mapped_column(index=True)
+    description: Mapped[str | None]
+
+    profile_constraints: Mapped[list[ProfileConstraint]] = relationship(
+        "ProfileConstraint",
+        back_populates="profile",
+    )
+    profile_ingredient_constraints: Mapped[list[ProfileIngredientConstraint]] = (
+        relationship(
+            "ProfileIngredientConstraint",
+            back_populates="profile",
+        )
+    )
+    profile_nutrient_constraints: Mapped[list[ProfileNutrientConstraint]] = (
+        relationship(
+            "ProfileNutrientConstraint",
+            back_populates="profile",
+        )
+    )
+    profile_ingredient_nutrient_values: Mapped[list[ProfileIngredientNutrientValue]] = (
+        relationship(
+            "ProfileIngredientNutrientValue",
+            back_populates="profile",
+        )
+    )
+    profile_pandalist_rules: Mapped[list[ProfilePandalistRule]] = relationship(
+        "ProfilePandalistRule",
+        back_populates="profile",
     )

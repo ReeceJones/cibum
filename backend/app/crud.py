@@ -286,3 +286,101 @@ async def get_child_ingredients_with_overrides(
     }
 
     return [(x, ingredient_overrides_dict.get(x.id)) for x in ingredients]
+
+
+async def get_units(
+    db: AsyncSession,
+    ids: list[str],
+) -> list[models.Unit]:
+    units = await db.scalars(
+        select(models.Unit).where(
+            models.Unit.id.in_(ids),
+            models.Unit.archived == False,
+        )
+    )
+
+    return list(units)
+
+
+async def get_profile_pandalist_rules(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.ProfilePandalistRule]:
+    rules = await db.scalars(
+        select(models.ProfilePandalistRule).where(
+            models.ProfilePandalistRule.id.in_(ids),
+            models.ProfilePandalistRule.archived == False,
+        )
+    )
+
+    return list(rules)
+
+
+async def get_profile_ingredient_nutrient_values(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.ProfileIngredientNutrientValue]:
+    values = await db.scalars(
+        select(models.ProfileIngredientNutrientValue).where(
+            models.ProfileIngredientNutrientValue.id.in_(ids),
+            models.ProfileIngredientNutrientValue.archived == False,
+        )
+    )
+
+    return list(values)
+
+
+async def get_profile_ingredient_constraints(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.ProfileIngredientConstraint]:
+    constraints = await db.scalars(
+        select(models.ProfileIngredientConstraint).where(
+            models.ProfileIngredientConstraint.id.in_(ids),
+            models.ProfileIngredientConstraint.archived == False,
+        )
+    )
+
+    return list(constraints)
+
+
+async def get_profile_nutrient_constraints(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.ProfileNutrientConstraint]:
+    constraints = await db.scalars(
+        select(models.ProfileNutrientConstraint).where(
+            models.ProfileNutrientConstraint.id.in_(ids),
+            models.ProfileNutrientConstraint.archived == False,
+        )
+    )
+
+    return list(constraints)
+
+
+async def get_profile_constraints(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.ProfileConstraint]:
+    constraints = await db.scalars(
+        select(models.ProfileConstraint).where(
+            models.ProfileConstraint.id.in_(ids),
+            models.ProfileConstraint.archived == False,
+        )
+    )
+
+    return list(constraints)
+
+
+async def get_profiles(
+    db: AsyncSession,
+    ids: list[int],
+) -> list[models.Profile]:
+    profiles = await db.scalars(
+        select(models.Profile).where(
+            models.Profile.id.in_(ids),
+            models.Profile.archived == False,
+        )
+    )
+
+    return list(profiles)
