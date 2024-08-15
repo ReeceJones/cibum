@@ -172,36 +172,6 @@ async def resolve_profile_ingredient_nutrient_value_nodes(
         )
 
 
-async def resolve_profile_pandalist_rule_nodes(
-    info: "context.Info", rule_ids: Iterable[str], required: bool = False
-) -> list[Optional["schemas.ProfilePandalistRule"]]:
-    if not context.has_org(info.context.user):
-        raise AuthError
-
-    nodes = [int(x) for x in rule_ids]
-    async with DB.async_session() as db:
-        rules = await db.scalars(
-            select(models.ProfilePandalistRule)
-            .join(models.Profile)
-            .where(
-                or_(
-                    models.Profile.organization_id == None,
-                    models.Profile.organization_id == info.context.user.org_id,
-                ),
-                models.ProfilePandalistRule.id.in_(nodes),
-                models.ProfilePandalistRule.archived == False,
-            )
-        )
-
-        return utils.make_relay_result(
-            nodes,
-            rules,
-            required,
-            lambda x: x.id,
-            schemas.ProfilePandalistRule.from_model,
-        )
-
-
 async def resolve_profile_ingredient_constraints(
     info: "context.Info", profile_id: int
 ) -> list["schemas.ProfileIngredientConstraint"]:
@@ -246,3 +216,26 @@ async def resolve_profile_nutrient_constraints(
         )
 
         return [schemas.ProfileNutrientConstraint.from_model(c) for c in constraints]
+
+
+async def resolve_profile_ingredient_nutrient_values(
+    info: "context.Info", profile_id: int
+) -> list["schemas.ProfileIngredientNutrientValue"]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        values = await db.scalars(
+            select(models.ProfileIngredientNutrientValue)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.Profile.id == profile_id,
+                models.ProfileIngredientNutrientValue.archived == False,
+            )
+        )
+
+        return [schemas.ProfileIngredientNutrientValue.from_model(v) for v in values]

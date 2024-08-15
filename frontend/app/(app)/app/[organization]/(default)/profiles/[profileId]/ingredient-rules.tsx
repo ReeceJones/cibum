@@ -18,11 +18,13 @@ import { useProfile } from "./use-profile";
 import {
   ConstraintOperator,
   IngredientConstraintMode,
+  IngredientConstraintType,
   ProfileIngredientConstraint,
 } from "@/lib/gql/graphql";
 import { Button } from "@/components/ui/button";
 import {
   Icon123,
+  IconCategory,
   IconDeviceFloppy,
   IconDotsVertical,
   IconEdit,
@@ -47,6 +49,7 @@ import { useState } from "react";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -92,37 +95,92 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deleteProfileIngredientConstraintMutation } from "@/lib/mutations/delete-profile-ingredient-constraint";
+import { Switch } from "@/components/ui/switch";
+import { VirtualizedIngredientCategoryComboBox } from "@/components/ui/ingredient-category-combobox";
 
 function IngredientRuleForm({
   form,
 }: {
   form: UseFormReturn<z.infer<typeof profileIngredientConstraintSchema>>;
 }) {
-  const [mode] = useWatch({
+  const [mode, type] = useWatch({
     control: form.control,
-    name: ["mode"],
+    name: ["mode", "type"],
   });
 
   return (
     <div className="space-y-2">
-      <div className="flex items-end space-x-2">
-        <FormField
-          control={form.control}
-          name="ingredient"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>Ingredient</FormLabel>
-              <FormMessage />
-              <FormControl>
-                <VirtualizedIngredientComboBox
-                  required
-                  className="w-full"
-                  {...field}
+      <FormField
+        control={form.control}
+        name="type"
+        render={({ field }) => (
+          <FormItem>
+            <div className="border rounded-md p-3 flex justify-between items-center">
+              <div>
+                <FormLabel>Ingredient Category</FormLabel>
+                <FormDescription>
+                  Apply this rule to an entire ingredient category.
+                </FormDescription>
+              </div>
+              <div>
+                <Switch
+                  checked={
+                    field.value === IngredientConstraintType.IngredientCategory
+                  }
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      field.onChange(
+                        IngredientConstraintType.IngredientCategory
+                      );
+                    } else {
+                      field.onChange(IngredientConstraintType.Ingredient);
+                    }
+                  }}
                 />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+              </div>
+            </div>
+          </FormItem>
+        )}
+      />
+      <div className="flex items-end space-x-2">
+        {type === IngredientConstraintType.Ingredient && (
+          <FormField
+            control={form.control}
+            name="ingredient"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Ingredient</FormLabel>
+                <FormMessage />
+                <FormControl>
+                  <VirtualizedIngredientComboBox
+                    className="w-full"
+                    required
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
+        {type === IngredientConstraintType.IngredientCategory && (
+          <FormField
+            control={form.control}
+            name="ingredientCategory"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Ingredient Category</FormLabel>
+                <FormMessage />
+                <FormControl>
+                  <VirtualizedIngredientCategoryComboBox
+                    className="w-full"
+                    required
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="operator"
@@ -199,25 +257,46 @@ function IngredientRuleForm({
             />
           </>
         )}
-        {mode === IngredientConstraintMode.Ingredient && (
-          <FormField
-            control={form.control}
-            name="referenceIngredient"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Reference Ingredient</FormLabel>
-                <FormMessage />
-                <FormControl>
-                  <VirtualizedIngredientComboBox
-                    required
-                    className="w-full"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        )}
+        {mode === IngredientConstraintMode.Reference &&
+          type === IngredientConstraintType.Ingredient && (
+            <FormField
+              control={form.control}
+              name="referenceIngredient"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Reference Ingredient</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <VirtualizedIngredientComboBox
+                      required
+                      className="w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
+        {mode === IngredientConstraintMode.Reference &&
+          type === IngredientConstraintType.IngredientCategory && (
+            <FormField
+              control={form.control}
+              name="referenceIngredientCategory"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Reference Ingredient Category</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <VirtualizedIngredientCategoryComboBox
+                      required
+                      className="w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
         <FormField
           control={form.control}
           name="mode"
@@ -233,28 +312,41 @@ function IngredientRuleForm({
                         className="w-10 p-0"
                         onClick={() => {
                           if (
-                            field.value === IngredientConstraintMode.Ingredient
+                            field.value === IngredientConstraintMode.Reference
                           ) {
                             field.onChange(IngredientConstraintMode.Literal);
                           } else {
-                            field.onChange(IngredientConstraintMode.Ingredient);
+                            field.onChange(IngredientConstraintMode.Reference);
                           }
                         }}
                       >
-                        {field.value ===
-                          IngredientConstraintMode.Ingredient && <Icon123 />}
-                        {field.value === IngredientConstraintMode.Literal && (
-                          <IconGrowth />
+                        {field.value === IngredientConstraintMode.Reference && (
+                          <Icon123 />
                         )}
+                        {field.value === IngredientConstraintMode.Literal &&
+                          type === IngredientConstraintType.Ingredient && (
+                            <IconGrowth />
+                          )}
+                        {field.value === IngredientConstraintMode.Literal &&
+                          type ===
+                            IngredientConstraintType.IngredientCategory && (
+                            <IconCategory />
+                          )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {field.value === IngredientConstraintMode.Ingredient && (
+                      {field.value === IngredientConstraintMode.Reference && (
                         <p>Switch to hardcoded-value</p>
                       )}
-                      {field.value === IngredientConstraintMode.Literal && (
-                        <p>Switch to ingredient comparison</p>
-                      )}
+                      {field.value === IngredientConstraintMode.Literal &&
+                        type === IngredientConstraintType.Ingredient && (
+                          <p>Switch to ingredient comparison</p>
+                        )}
+                      {field.value === IngredientConstraintMode.Literal &&
+                        type ===
+                          IngredientConstraintType.IngredientCategory && (
+                          <p>Switch to ingredient category comparison</p>
+                        )}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -272,6 +364,7 @@ function AddIngredientRuleDialogContent({ onSave }: { onSave: () => void }) {
     resolver: zodResolver(profileIngredientConstraintSchema),
     defaultValues: {
       id: crypto.randomUUID(),
+      type: IngredientConstraintType.Ingredient,
       mode: IngredientConstraintMode.Literal,
     },
   });
@@ -307,12 +400,16 @@ function AddIngredientRuleDialogContent({ onSave }: { onSave: () => void }) {
     await mutation.mutateAsync({
       input: {
         profileId: profile.id,
+        type: data.type,
         mode: data.mode,
         operator: data.operator,
-        ingredientId: data.ingredient.id,
+        ingredientId: data.ingredient?.id,
+        ingredientCategoryId: data.ingredientCategory?.id,
         literalValue: data.literalValue,
-        literalUnitId: data.literalUnit?.id,
-        referenceIngredientId: data.referenceIngredient?.id,
+        literalUnitId: data.literalUnit?.id ?? null,
+        referenceIngredientId: data.referenceIngredient?.id ?? null,
+        referenceIngredientCategoryId:
+          data.referenceIngredientCategory?.id ?? null,
       },
     });
   }
@@ -383,12 +480,21 @@ function EditIngredientRuleDialogContent({
     resolver: zodResolver(profileIngredientConstraintSchema),
     defaultValues: {
       id: ingredientRule.id,
+      type: ingredientRule.type,
       mode: ingredientRule.mode,
       operator: ingredientRule.operator,
-      ingredient: {
-        id: ingredientRule.ingredient!.id,
-        data: ingredientRule.ingredient!,
-      },
+      ingredient: ingredientRule.ingredient
+        ? {
+            id: ingredientRule.ingredient.id,
+            data: ingredientRule.ingredient,
+          }
+        : undefined,
+      ingredientCategory: ingredientRule.ingredientCategory
+        ? {
+            id: ingredientRule.ingredientCategory.id,
+            data: ingredientRule.ingredientCategory,
+          }
+        : undefined,
       literalValue: ingredientRule.literalValue ?? undefined,
       literalUnit: ingredientRule.literalUnit
         ? {
@@ -435,12 +541,15 @@ function EditIngredientRuleDialogContent({
     await mutation.mutateAsync({
       input: {
         id: ingredientRule.id,
+        type: data.type,
         mode: data.mode,
         operator: data.operator,
-        ingredientId: data.ingredient.id,
+        ingredientId: data.ingredient?.id ?? null,
+        ingredientCategoryId: data.ingredientCategory?.id ?? null,
         literalValue: data.literalValue,
         literalUnitId: data.literalUnit?.id,
-        referenceIngredientId: data.referenceIngredient?.id,
+        referenceIngredientId: data.referenceIngredient?.id ?? null,
+        referenceIngredientCategoryId: data.referenceIngredientCategory ?? null,
       },
     });
   }
@@ -594,6 +703,7 @@ function DeleteIngredientRuleAlertDialog({
     </AlertDialog>
   );
 }
+
 function IngredientRule({
   ingredientRule,
 }: {
@@ -602,13 +712,19 @@ function IngredientRule({
   const [open, setOpen] = useState(false);
   return (
     <TableRow>
-      <TableCell>{ingredientRule.ingredient!.name}</TableCell>
+      <TableCell>
+        {ingredientRule.type === IngredientConstraintType.Ingredient
+          ? ingredientRule.ingredient!.name
+          : ingredientRule.ingredientCategory!.name}
+      </TableCell>
       <TableCell className="text-center">
         {mapOperator(ingredientRule.operator)}
       </TableCell>
       <TableCell className="text-right">
-        {ingredientRule.mode === IngredientConstraintMode.Ingredient &&
-          ingredientRule.referenceIngredient!.name}
+        {ingredientRule.mode === IngredientConstraintMode.Reference &&
+          (ingredientRule.type === IngredientConstraintType.Ingredient
+            ? ingredientRule.referenceIngredient!.name
+            : ingredientRule.referenceIngredientCategory!.name)}
         {ingredientRule.mode === IngredientConstraintMode.Literal && (
           <span>
             {ingredientRule.literalValue} {ingredientRule.literalUnit!.symbol}

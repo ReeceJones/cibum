@@ -95,7 +95,6 @@ async def create_profile_constraint(
 
     async with DB.async_session() as db:
         profile_constraint = models.ProfileConstraint(
-            organization_id=info.context.user.org_id,
             profile_id=int(input.profile_id.node_id),
         )
         db.add(profile_constraint)
@@ -165,9 +164,72 @@ async def create_profile_ingredient_constraint(
         raise AuthError
 
     async with DB.async_session() as db:
+        if not utils.is_value(input.ingredient_id) and not utils.is_value(
+            input.ingredient_category_id
+        ):
+            raise Exception(
+                "Ingredient or ingredient category is required for ProfileIngredientConstraint"
+            )
+
+        if utils.is_value(input.ingredient_id):
+            ingredient = await db.get(
+                models.Ingredient, int(input.ingredient_id.node_id)
+            )
+
+            if ingredient is None or (
+                ingredient.organization_id is not None
+                and ingredient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Ingredient not found")
+
+        if utils.is_value(input.ingredient_category_id):
+            ingredient_category = await db.get(
+                models.IngredientCategory, int(input.ingredient_category_id.node_id)
+            )
+
+            if ingredient_category is None or (
+                ingredient_category.organization_id is not None
+                and ingredient_category.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Ingredient category not found")
+
+        if utils.is_value(input.reference_ingredient_id):
+            reference_ingredient = await db.get(
+                models.Ingredient, int(input.reference_ingredient_id.node_id)
+            )
+
+            if reference_ingredient is None or (
+                reference_ingredient.organization_id is not None
+                and reference_ingredient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Reference ingredient not found")
+
+        if utils.is_value(input.reference_ingredient_category_id):
+            reference_ingredient_category = await db.get(
+                models.IngredientCategory,
+                int(input.reference_ingredient_category_id.node_id),
+            )
+
+            if reference_ingredient_category is None or (
+                reference_ingredient_category.organization_id is not None
+                and reference_ingredient_category.organization_id
+                != info.context.user.org_id
+            ):
+                raise Exception("Reference ingredient category not found")
+
         profile_ingredient_constraint = models.ProfileIngredientConstraint(
             profile_id=int(input.profile_id.node_id),
-            ingredient_id=int(input.ingredient_id.node_id),
+            ingredient_id=(
+                int(input.ingredient_id.node_id)
+                if utils.is_value(input.ingredient_id)
+                else None
+            ),
+            ingredient_category_id=(
+                int(input.ingredient_category_id.node_id)
+                if utils.is_value(input.ingredient_category_id)
+                else None
+            ),
+            type=input.type.value,
             mode=input.mode.value,
             operator=input.operator.value,
             literal_unit_id=(
@@ -181,6 +243,11 @@ async def create_profile_ingredient_constraint(
             reference_ingredient_id=(
                 int(input.reference_ingredient_id.node_id)
                 if utils.is_value(input.reference_ingredient_id)
+                else None
+            ),
+            reference_ingredient_category_id=(
+                int(input.reference_ingredient_category_id.node_id)
+                if utils.is_value(input.reference_ingredient_category_id)
                 else None
             ),
         )
@@ -218,26 +285,82 @@ async def update_profile_ingredient_constraint(
             raise Exception("Profile ingredient constraint not found")
 
         if utils.is_set(input.ingredient_id):
-            if input.ingredient_id is None:
+            if (
+                input.ingredient_id is None
+                and input.type == schemas.IngredientConstraintType.INGREDIENT
+            ):
                 raise Exception(
                     "Ingredient is required for ProfileIngredientConstraint"
                 )
+            elif input.ingredient_id is None:
+                profile_ingredient_constraint.ingredient_id = None
+            else:
+                ingredient = await db.get(
+                    models.Ingredient, int(input.ingredient_id.node_id)
+                )
 
-            ingredient = await db.get(
-                models.Ingredient, int(input.ingredient_id.node_id)
+                if ingredient is None:
+                    raise Exception("Ingredient not found")
+
+                if (
+                    ingredient.organization_id is not None
+                    and ingredient.organization_id != info.context.user.org_id
+                ):
+                    raise Exception("Ingredient not found")
+
+                profile_ingredient_constraint.ingredient_id = int(
+                    input.ingredient_id.node_id
+                )
+
+        if utils.is_set(input.ingredient_category_id):
+            if (
+                input.ingredient_category_id is None
+                and input.type == schemas.IngredientConstraintType.INGREDIENT
+            ):
+                raise Exception(
+                    "Ingredient category is required for ProfileIngredientConstraint"
+                )
+            elif input.ingredient_category_id is None:
+                profile_ingredient_constraint.ingredient_category_id = None
+            else:
+                ingredient_category = await db.get(
+                    models.IngredientCategory, int(input.ingredient_category_id.node_id)
+                )
+
+                if ingredient_category is None:
+                    raise Exception("Ingredient category not found")
+
+                if (
+                    ingredient_category.organization_id is not None
+                    and ingredient_category.organization_id != info.context.user.org_id
+                ):
+                    raise Exception("Ingredient category not found")
+
+                profile_ingredient_constraint.ingredient_category_id = int(
+                    input.ingredient_category_id.node_id
+                )
+
+        if utils.is_set(input.ingredient_category_id):
+            if input.ingredient_category_id is None:
+                raise Exception(
+                    "Ingredient category is required for ProfileIngredientConstraint"
+                )
+
+            ingredient_category = await db.get(
+                models.IngredientCategory, int(input.ingredient_category_id.node_id)
             )
 
-            if ingredient is None:
-                raise Exception("Ingredient not found")
+            if ingredient_category is None:
+                raise Exception("Ingredient category not found")
 
             if (
-                ingredient.organization_id is not None
-                and ingredient.organization_id != info.context.user.org_id
+                ingredient_category.organization_id is not None
+                and ingredient_category.organization_id != info.context.user.org_id
             ):
-                raise Exception("Ingredient not found")
+                raise Exception("Ingredient category not found")
 
-            profile_ingredient_constraint.ingredient_id = int(
-                input.ingredient_id.node_id
+            profile_ingredient_constraint.ingredient_category_id = int(
+                input.ingredient_category_id.node_id
             )
 
         if utils.is_set(input.mode):
@@ -245,6 +368,27 @@ async def update_profile_ingredient_constraint(
                 raise Exception("mode is required for ProfileIngredientConstraint")
 
             profile_ingredient_constraint.mode = input.mode.value
+
+        if utils.is_set(input.type):
+            if input.type is None:
+                raise Exception("type is required for ProfileIngredientConstraint")
+
+            if (
+                input.type == schemas.IngredientConstraintType.INGREDIENT
+                and not utils.is_value(input.ingredient_id)
+            ):
+                raise Exception(
+                    "ingredient_id is required for ProfileIngredientConstraint"
+                )
+            if (
+                input.type == schemas.IngredientConstraintType.INGREDIENT_CATEGORY
+                and not utils.is_value(input.ingredient_category_id)
+            ):
+                raise Exception(
+                    "ingredient_category_id is required for ProfileIngredientConstraint"
+                )
+
+            profile_ingredient_constraint.type = input.type.value
 
         if utils.is_set(input.operator):
             if input.operator is None:
@@ -262,7 +406,15 @@ async def update_profile_ingredient_constraint(
             profile_ingredient_constraint.literal_value = input.literal_value
 
         if utils.is_set(input.reference_ingredient_id):
-            if input.reference_ingredient_id is None:
+            if (
+                input.reference_ingredient_id is None
+                and input.type == schemas.IngredientConstraintType.INGREDIENT
+                and input.mode == schemas.IngredientConstraintMode.REFERENCE
+            ):
+                raise Exception(
+                    "Reference ingredient is required for ProfileIngredientConstraint"
+                )
+            elif input.reference_ingredient_id is None:
                 profile_ingredient_constraint.reference_ingredient_id = None
             else:
                 # get the reference ingredient
@@ -270,10 +422,7 @@ async def update_profile_ingredient_constraint(
                     models.Ingredient, int(input.reference_ingredient_id.node_id)
                 )
 
-                if reference_ingredient is None:
-                    raise Exception("Reference ingredient not found")
-
-                if (
+                if reference_ingredient is None or (
                     reference_ingredient.organization_id is not None
                     and reference_ingredient.organization_id != info.context.user.org_id
                 ):
@@ -281,6 +430,35 @@ async def update_profile_ingredient_constraint(
 
                 profile_ingredient_constraint.reference_ingredient_id = int(
                     input.reference_ingredient_id.node_id
+                )
+
+        if utils.is_set(input.reference_ingredient_category_id):
+            if (
+                input.reference_ingredient_category_id is None
+                and input.type == schemas.IngredientConstraintType.INGREDIENT_CATEGORY
+                and input.mode == schemas.IngredientConstraintMode.REFERENCE
+            ):
+                raise Exception(
+                    "Reference ingredient category is required for ProfileIngredientConstraint"
+                )
+            elif input.reference_ingredient_category_id is None:
+                profile_ingredient_constraint.reference_ingredient_category_id = None
+            else:
+                # get the reference ingredient category
+                reference_ingredient_category = await db.get(
+                    models.IngredientCategory,
+                    int(input.reference_ingredient_category_id.node_id),
+                )
+
+                if reference_ingredient_category is None or (
+                    reference_ingredient_category.organization_id is not None
+                    and reference_ingredient_category.organization_id
+                    != info.context.user.org_id
+                ):
+                    raise Exception("Reference ingredient category not found")
+
+                profile_ingredient_constraint.reference_ingredient_category_id = int(
+                    input.reference_ingredient_category_id.node_id
                 )
 
         await db.commit()
@@ -330,9 +508,95 @@ async def create_profile_nutrient_constraint(
         raise AuthError
 
     async with DB.async_session() as db:
+        if utils.is_value(input.nutrient_id):
+            nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+
+            if nutrient is None or (
+                nutrient.organization_id is not None
+                and nutrient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Nutrient not found")
+
+        if utils.is_value(input.nutrient_category_id):
+            nutrient_category = await db.get(
+                models.NutrientCategory, int(input.nutrient_category_id.node_id)
+            )
+
+            if nutrient_category is None or (
+                nutrient_category.organization_id is not None
+                and nutrient_category.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Nutrient category not found")
+
+        if utils.is_value(input.reference_nutrient_id):
+            reference_nutrient = await db.get(
+                models.Nutrient, int(input.reference_nutrient_id.node_id)
+            )
+
+            if reference_nutrient is None or (
+                reference_nutrient.organization_id is not None
+                and reference_nutrient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Reference nutrient not found")
+
+        if utils.is_value(input.reference_nutrient_category_id):
+            reference_nutrient_category = await db.get(
+                models.NutrientCategory,
+                int(input.reference_nutrient_category_id.node_id),
+            )
+
+            if reference_nutrient_category is None or (
+                reference_nutrient_category.organization_id is not None
+                and reference_nutrient_category.organization_id
+                != info.context.user.org_id
+            ):
+                raise Exception("Reference nutrient category not found")
+
+        if (
+            input.type == schemas.NutrientConstraintType.NUTRIENT
+            and not utils.is_value(input.nutrient_id)
+        ):
+            raise Exception("Nutrient is required for ProfileNutrientConstraint")
+
+        if (
+            input.type == schemas.NutrientConstraintType.NUTRIENT_CATEGORY
+            and not utils.is_value(input.nutrient_category_id)
+        ):
+            raise Exception(
+                "Nutrient category is required for ProfileNutrientConstraint"
+            )
+
+        if (
+            input.mode == schemas.NutrientConstraintMode.REFERENCE
+            and not utils.is_value(input.reference_nutrient_id)
+            and not utils.is_value(input.reference_nutrient_category_id)
+        ):
+            raise Exception(
+                "Reference nutrient or reference nutrient category is required for ProfileNutrientConstraint"
+            )
+
+        if (
+            input.mode == schemas.NutrientConstraintMode.REFERENCE
+            and input.type == schemas.NutrientConstraintType.NUTRIENT
+            and not utils.is_value(input.reference_nutrient_id)
+        ):
+            raise Exception(
+                "Reference nutrient is required for ProfileNutrientConstraint"
+            )
+
         profile_nutrient_constraint = models.ProfileNutrientConstraint(
             profile_id=int(input.profile_id.node_id),
-            nutrient_id=int(input.nutrient_id.node_id),
+            nutrient_id=(
+                int(input.nutrient_id.node_id)
+                if utils.is_value(input.nutrient_id)
+                else None
+            ),
+            nutrient_category_id=(
+                int(input.nutrient_category_id.node_id)
+                if utils.is_value(input.nutrient_category_id)
+                else None
+            ),
+            type=input.type.value,
             mode=input.mode.value,
             operator=input.operator.value,
             literal_unit_id=(
@@ -346,6 +610,11 @@ async def create_profile_nutrient_constraint(
             reference_nutrient_id=(
                 int(input.reference_nutrient_id.node_id)
                 if utils.is_value(input.reference_nutrient_id)
+                else None
+            ),
+            reference_nutrient_category_id=(
+                int(input.reference_nutrient_category_id.node_id)
+                if utils.is_value(input.reference_nutrient_category_id)
                 else None
             ),
         )
@@ -381,21 +650,71 @@ async def update_profile_nutrient_constraint(
             raise Exception("Profile nutrient constraint not found")
 
         if utils.is_set(input.nutrient_id):
-            if input.nutrient_id is None:
+            if (
+                input.nutrient_id is None
+                and input.type == schemas.NutrientConstraintType.NUTRIENT
+            ):
                 raise Exception("Nutrient is required for ProfileNutrientConstraint")
+            elif input.nutrient_id is None:
+                profile_nutrient_constraint.nutrient_id = None
+            else:
+                nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
 
-            nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+                if nutrient is None:
+                    raise Exception("Nutrient not found")
 
-            if nutrient is None:
-                raise Exception("Nutrient not found")
+                if (
+                    nutrient.organization_id is not None
+                    and nutrient.organization_id != info.context.user.org_id
+                ):
+                    raise Exception("Nutrient not found")
+
+                profile_nutrient_constraint.nutrient_id = int(input.nutrient_id.node_id)
+
+        if utils.is_set(input.nutrient_category_id):
+            if (
+                input.nutrient_category_id is None
+                and input.type == schemas.NutrientConstraintType.NUTRIENT_CATEGORY
+            ):
+                raise Exception(
+                    "Nutrient category is required for ProfileNutrientConstraint"
+                )
+            elif input.nutrient_category_id is None:
+                profile_nutrient_constraint.nutrient_category_id = None
+            else:
+                nutrient_category = await db.get(
+                    models.NutrientCategory, int(input.nutrient_category_id.node_id)
+                )
+
+                if nutrient_category is None:
+                    raise Exception("Nutrient category not found")
+
+                if (
+                    nutrient_category.organization_id is not None
+                    and nutrient_category.organization_id != info.context.user.org_id
+                ):
+                    raise Exception("Nutrient category not found")
+
+                profile_nutrient_constraint.nutrient_category_id = int(
+                    input.nutrient_category_id.node_id
+                )
+
+        if utils.is_set(input.type):
+            if input.type is None:
+                raise Exception("type is required for ProfileNutrientConstraint")
 
             if (
-                nutrient.organization_id is not None
-                and nutrient.organization_id != info.context.user.org_id
+                input.type == schemas.NutrientConstraintType.NUTRIENT
+                and not utils.is_value(input.nutrient_id)
             ):
-                raise Exception("Nutrient not found")
-
-            profile_nutrient_constraint.nutrient_id = int(input.nutrient_id.node_id)
+                raise Exception("nutrient_id is required for ProfileNutrientConstraint")
+            if (
+                input.type == schemas.NutrientConstraintType.NUTRIENT_CATEGORY
+                and not utils.is_value(input.nutrient_category_id)
+            ):
+                raise Exception(
+                    "nutrient_category_id is required for ProfileNutrientConstraint"
+                )
 
         if utils.is_set(input.mode):
             if input.mode is None:
@@ -419,7 +738,15 @@ async def update_profile_nutrient_constraint(
             profile_nutrient_constraint.literal_value = input.literal_value
 
         if utils.is_set(input.reference_nutrient_id):
-            if input.reference_nutrient_id is None:
+            if (
+                input.reference_nutrient_id is None
+                and input.type == schemas.NutrientConstraintType.NUTRIENT
+                and input.mode == schemas.NutrientConstraintMode.REFERENCE
+            ):
+                raise Exception(
+                    "Reference nutrient is required for ProfileNutrientConstraint"
+                )
+            elif input.reference_nutrient_id is None:
                 profile_nutrient_constraint.reference_nutrient_id = None
             else:
                 # get the reference nutrient
@@ -438,6 +765,38 @@ async def update_profile_nutrient_constraint(
 
                 profile_nutrient_constraint.reference_nutrient_id = int(
                     input.reference_nutrient_id.node_id
+                )
+
+        if utils.is_set(input.reference_nutrient_category_id):
+            if (
+                input.reference_nutrient_category_id is None
+                and input.type == schemas.NutrientConstraintType.NUTRIENT_CATEGORY
+                and input.mode == schemas.NutrientConstraintMode.REFERENCE
+            ):
+                raise Exception(
+                    "Reference nutrient category is required for ProfileNutrientConstraint"
+                )
+            elif input.reference_nutrient_category_id is None:
+                profile_nutrient_constraint.reference_nutrient_category_id = None
+            else:
+                # get the reference nutrient category
+                reference_nutrient_category = await db.get(
+                    models.NutrientCategory,
+                    int(input.reference_nutrient_category_id.node_id),
+                )
+
+                if reference_nutrient_category is None:
+                    raise Exception("Reference nutrient category not found")
+
+                if (
+                    reference_nutrient_category.organization_id is not None
+                    and reference_nutrient_category.organization_id
+                    != info.context.user.org_id
+                ):
+                    raise Exception("Reference nutrient category not found")
+
+                profile_nutrient_constraint.reference_nutrient_category_id = int(
+                    input.reference_nutrient_category_id.node_id
                 )
 
         await db.commit()
@@ -485,8 +844,23 @@ async def create_profile_ingredient_nutrient_value(
         raise AuthError
 
     async with DB.async_session() as db:
+        ingredient = await db.get(models.Ingredient, int(input.ingredient_id.node_id))
+
+        if ingredient is None or (
+            ingredient.organization_id is not None
+            and ingredient.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Ingredient not found")
+
+        nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+
+        if nutrient is None or (
+            nutrient.organization_id is not None
+            and nutrient.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Nutrient not found")
+
         profile_ingredient_nutrient_value = models.ProfileIngredientNutrientValue(
-            organization_id=info.context.user.org_id,
             profile_id=int(input.profile_id.node_id),
             ingredient_id=int(input.ingredient_id.node_id),
             nutrient_id=int(input.nutrient_id.node_id),
@@ -525,6 +899,50 @@ async def update_profile_ingredient_nutrient_value(
             != info.context.user.org_id
         ):
             raise Exception("Profile ingredient nutrient value not found")
+
+        if utils.is_set(input.ingredient_id):
+            if input.ingredient_id is None:
+                raise Exception(
+                    "ingredient_id is required for ProfileIngredientNutrientValue"
+                )
+
+            ingredient = await db.get(
+                models.Ingredient, int(input.ingredient_id.node_id)
+            )
+
+            if ingredient is None:
+                raise Exception("Ingredient not found")
+
+            if (
+                ingredient.organization_id is not None
+                and ingredient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Ingredient not found")
+
+            profile_ingredient_nutrient_value.ingredient_id = int(
+                input.ingredient_id.node_id
+            )
+
+        if utils.is_set(input.nutrient_id):
+            if input.nutrient_id is None:
+                raise Exception(
+                    "nutrient_id is required for ProfileIngredientNutrientValue"
+                )
+
+            nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+
+            if nutrient is None:
+                raise Exception("Nutrient not found")
+
+            if (
+                nutrient.organization_id is not None
+                and nutrient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Nutrient not found")
+
+            profile_ingredient_nutrient_value.nutrient_id = int(
+                input.nutrient_id.node_id
+            )
 
         if utils.is_set(input.value):
             if input.value is None:
@@ -574,96 +992,6 @@ async def delete_profile_ingredient_nutrient_value(
                 raise Exception("Profile ingredient nutrient value not found")
 
             profile_ingredient_nutrient_value.archived = True
-
-        await db.commit()
-
-        return schemas.DeletedNode(success=True)
-
-
-async def create_profile_pandalist_rule(
-    info: context.Info, input: "schemas.CreateProfilePandalistRuleInput"
-) -> "schemas.ProfilePandalistRule":
-    if not context.has_org(info.context.user):
-        raise AuthError
-
-    async with DB.async_session() as db:
-        profile_pandalist_rule = models.ProfilePandalistRule(
-            organization_id=info.context.user.org_id,
-            profile_id=int(input.profile_id.node_id),
-            scope=input.scope.value,
-            mode=input.mode.value,
-        )
-        db.add(profile_pandalist_rule)
-        await db.commit()
-
-        return schemas.ProfilePandalistRule.from_model(profile_pandalist_rule)
-
-
-async def update_profile_pandalist_rule(
-    info: context.Info, input: "schemas.UpdateProfilePandalistRuleInput"
-) -> "schemas.ProfilePandalistRule":
-    if not context.has_org(info.context.user):
-        raise AuthError
-
-    async with DB.async_session() as db:
-        profile_pandalist_rule = await db.get(
-            models.ProfilePandalistRule,
-            int(input.id.node_id),
-            options=[
-                selectinload(models.ProfilePandalistRule.profile),
-            ],
-        )
-
-        if profile_pandalist_rule is None:
-            raise Exception("Profile pandalist rule not found")
-
-        if (
-            profile_pandalist_rule.profile.organization_id is not None
-            and profile_pandalist_rule.profile.organization_id
-            != info.context.user.org_id
-        ):
-            raise Exception("Profile pandalist rule not found")
-
-        if utils.is_set(input.scope):
-            if input.scope is None:
-                raise Exception("scope is required for ProfilePandalistRule")
-
-            profile_pandalist_rule.scope = input.scope.value
-
-        if utils.is_set(input.mode):
-            if input.mode is None:
-                raise Exception("mode is required for ProfilePandalistRule")
-
-            profile_pandalist_rule.mode = input.mode.value
-
-        await db.commit()
-
-        return schemas.ProfilePandalistRule.from_model(profile_pandalist_rule)
-
-
-async def delete_profile_pandalist_rule(
-    info: context.Info, input: "schemas.DeleteNodeInput"
-) -> "schemas.DeletedNode":
-    if not context.has_org(info.context.user):
-        raise AuthError
-
-    async with DB.async_session() as db:
-        for id in input.ids:
-            profile_pandalist_rule = await db.get(
-                models.ProfilePandalistRule, int(id.node_id)
-            )
-
-            if profile_pandalist_rule is None:
-                raise Exception("Profile pandalist rule not found")
-
-            if (
-                profile_pandalist_rule.profile.organization_id is not None
-                and profile_pandalist_rule.profile.organization_id
-                != info.context.user.org_id
-            ):
-                raise Exception("Profile pandalist rule not found")
-
-            profile_pandalist_rule.archived = True
 
         await db.commit()
 

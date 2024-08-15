@@ -302,20 +302,6 @@ async def get_units(
     return list(units)
 
 
-async def get_profile_pandalist_rules(
-    db: AsyncSession,
-    ids: list[int],
-) -> list[models.ProfilePandalistRule]:
-    rules = await db.scalars(
-        select(models.ProfilePandalistRule).where(
-            models.ProfilePandalistRule.id.in_(ids),
-            models.ProfilePandalistRule.archived == False,
-        )
-    )
-
-    return list(rules)
-
-
 async def get_profile_ingredient_nutrient_values(
     db: AsyncSession,
     ids: list[int],

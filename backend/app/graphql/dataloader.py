@@ -62,14 +62,6 @@ async def _load_unit(
         return [schemas.Unit.from_model(unit) for unit in units]
 
 
-async def _load_profile_pandalist_rule(
-    keys: list[int],
-) -> list["schemas.ProfilePandalistRule"]:
-    async with DB.async_session() as db:
-        rules = await crud.get_profile_pandalist_rules(db, keys)
-        return [schemas.ProfilePandalistRule.from_model(rule) for rule in rules]
-
-
 async def _load_profile_ingredient_nutrient_value(
     keys: list[int],
 ) -> list["schemas.ProfileIngredientNutrientValue"]:
@@ -128,7 +120,6 @@ class Loaders:
         self.ingredient_category = DataLoader(load_fn=_load_ingredient_category)
         self.ingredient = DataLoader(load_fn=_load_ingredient)
         self.unit = DataLoader(load_fn=_load_unit)
-        self.profile_pandalist_rule = DataLoader(load_fn=_load_profile_pandalist_rule)
         self.profile_ingredient_nutrient_value = DataLoader(
             load_fn=_load_profile_ingredient_nutrient_value
         )

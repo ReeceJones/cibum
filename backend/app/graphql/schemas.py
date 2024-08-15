@@ -245,20 +245,6 @@ class IngredientCategory(relay.Node):
 
 
 @strawberry.enum
-class ProfilePandalistScope(Enum):
-    INGREDIENT = "INGREDIENT"
-    INGREDIENT_CATEGORY = "INGREDIENT_CATEGORY"
-    NUTRIENT = "NUTRIENT"
-    NUTRIENT_CATEGORY = "NUTRIENT_CATEGORY"
-
-
-@strawberry.enum
-class ProfilePandalistMode(Enum):
-    INCLUDE = "INCLUDE"
-    EXCLUDE = "EXCLUDE"
-
-
-@strawberry.enum
 class ConstraintOperator(Enum):
     EQUAL = "EQUAL"
     NOT_EQUAL = "NOT_EQUAL"
@@ -269,15 +255,27 @@ class ConstraintOperator(Enum):
 
 
 @strawberry.enum
+class IngredientConstraintType(Enum):
+    INGREDIENT = "INGREDIENT"
+    INGREDIENT_CATEGORY = "INGREDIENT_CATEGORY"
+
+
+@strawberry.enum
 class IngredientConstraintMode(Enum):
     LITERAL = "LITERAL"
-    INGREDIENT = "INGREDIENT"
+    REFERENCE = "REFERENCE"
+
+
+@strawberry.enum
+class NutrientConstraintType(Enum):
+    NUTRIENT = "NUTRIENT"
+    NUTRIENT_CATEGORY = "NUTRIENT_CATEGORY"
 
 
 @strawberry.enum
 class NutrientConstraintMode(Enum):
     LITERAL = "LITERAL"
-    NUTRIENT = "NUTRIENT"
+    REFERENCE = "REFERENCE"
 
 
 @strawberry.type
@@ -306,31 +304,6 @@ class Unit(relay.Node):
 
 
 @strawberry.type
-class ProfilePandalistRule(relay.Node):
-    id: relay.NodeID[strawberry.ID]
-    profile_id: relay.GlobalID
-    scope: ProfilePandalistScope
-    mode: ProfilePandalistMode
-
-    @staticmethod
-    def from_model(rule: models.ProfilePandalistRule) -> "ProfilePandalistRule":
-        return ProfilePandalistRule(
-            id=strawberry_id(rule.id),
-            profile_id=global_id(Profile, rule.profile_id),
-            scope=ProfilePandalistScope(rule.scope),
-            mode=ProfilePandalistMode(rule.mode),
-        )
-
-    @classmethod
-    async def resolve_nodes(
-        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
-    ) -> list["ProfilePandalistRule"]:
-        return await resolvers.profiles.resolve_profile_pandalist_rule_nodes(
-            info, node_ids, required
-        )  # type: ignore
-
-
-@strawberry.type
 class ProfileIngredientNutrientValue(relay.Node):
     id: relay.NodeID[strawberry.ID]
     profile_id: relay.GlobalID
@@ -338,6 +311,20 @@ class ProfileIngredientNutrientValue(relay.Node):
     nutrient_id: relay.GlobalID
     value: float
     unit_id: relay.GlobalID
+
+    @strawberry.field
+    async def unit(self, info: Info) -> Unit:
+        return await info.context.loaders.unit.load(self.unit_id.node_id)
+
+    @strawberry.field
+    async def ingredient(self, info: Info) -> Ingredient:
+        return await info.context.loaders.ingredient.load(
+            int(self.ingredient_id.node_id)
+        )
+
+    @strawberry.field
+    async def nutrient(self, info: Info) -> Nutrient:
+        return await info.context.loaders.nutrient.load(int(self.nutrient_id.node_id))
 
     @staticmethod
     def from_model(
@@ -365,17 +352,32 @@ class ProfileIngredientNutrientValue(relay.Node):
 class ProfileIngredientConstraint(relay.Node):
     id: relay.NodeID[strawberry.ID]
     profile_id: relay.GlobalID
-    ingredient_id: relay.GlobalID
+    ingredient_id: relay.GlobalID | None
+    ingredient_category_id: relay.GlobalID | None
+    type: IngredientConstraintType
     mode: IngredientConstraintMode
     operator: ConstraintOperator
     literal_unit_id: relay.GlobalID | None
     literal_value: float | None
     reference_ingredient_id: relay.GlobalID | None
+    reference_ingredient_category_id: relay.GlobalID | None
 
     @strawberry.field
     async def ingredient(self, info: Info) -> Optional[Ingredient]:
+        if self.ingredient_id is None:
+            return None
+
         return await info.context.loaders.ingredient.load(
             int(self.ingredient_id.node_id)
+        )
+
+    @strawberry.field
+    async def ingredient_category(self, info: Info) -> Optional[IngredientCategory]:
+        if self.ingredient_category_id is None:
+            return None
+
+        return await info.context.loaders.ingredient_category.load(
+            int(self.ingredient_category_id.node_id)
         )
 
     @strawberry.field
@@ -394,6 +396,17 @@ class ProfileIngredientConstraint(relay.Node):
             int(self.reference_ingredient_id.node_id)
         )
 
+    @strawberry.field
+    async def reference_ingredient_category(
+        self, info: Info
+    ) -> Optional[IngredientCategory]:
+        if self.reference_ingredient_category_id is None:
+            return None
+
+        return await info.context.loaders.ingredient_category.load(
+            int(self.reference_ingredient_category_id.node_id)
+        )
+
     @staticmethod
     def from_model(
         constraint: models.ProfileIngredientConstraint,
@@ -401,7 +414,17 @@ class ProfileIngredientConstraint(relay.Node):
         return ProfileIngredientConstraint(
             id=strawberry_id(constraint.id),
             profile_id=global_id(Profile, constraint.profile_id),
-            ingredient_id=global_id(Ingredient, constraint.ingredient_id),
+            ingredient_id=(
+                global_id(Ingredient, constraint.ingredient_id)
+                if constraint.ingredient_id is not None
+                else None
+            ),
+            ingredient_category_id=(
+                global_id(IngredientCategory, constraint.ingredient_category_id)
+                if constraint.ingredient_category_id is not None
+                else None
+            ),
+            type=IngredientConstraintType(constraint.type),
             mode=IngredientConstraintMode(constraint.mode),
             operator=ConstraintOperator(constraint.operator),
             literal_unit_id=(
@@ -413,6 +436,13 @@ class ProfileIngredientConstraint(relay.Node):
             reference_ingredient_id=(
                 global_id(Ingredient, constraint.reference_ingredient_id)
                 if constraint.reference_ingredient_id is not None
+                else None
+            ),
+            reference_ingredient_category_id=(
+                global_id(
+                    IngredientCategory, constraint.reference_ingredient_category_id
+                )
+                if constraint.reference_ingredient_category_id is not None
                 else None
             ),
         )
@@ -430,16 +460,31 @@ class ProfileIngredientConstraint(relay.Node):
 class ProfileNutrientConstraint(relay.Node):
     id: relay.NodeID[strawberry.ID]
     profile_id: relay.GlobalID
-    nutrient_id: relay.GlobalID
+    nutrient_id: relay.GlobalID | None
+    nutrient_category_id: relay.GlobalID | None
+    type: NutrientConstraintType
     mode: NutrientConstraintMode
     operator: ConstraintOperator
     literal_unit_id: relay.GlobalID | None
     literal_value: float | None
     reference_nutrient_id: relay.GlobalID | None
+    reference_nutrient_category_id: relay.GlobalID | None
 
     @strawberry.field
     async def nutrient(self, info: Info) -> Optional[Nutrient]:
+        if self.nutrient_id is None:
+            return None
+
         return await info.context.loaders.nutrient.load(int(self.nutrient_id.node_id))
+
+    @strawberry.field
+    async def nutrient_category(self, info: Info) -> Optional[NutrientCategory]:
+        if self.nutrient_category_id is None:
+            return None
+
+        return await info.context.loaders.nutrient_category.load(
+            int(self.nutrient_category_id.node_id)
+        )
 
     @strawberry.field
     async def literal_unit(self, info: Info) -> Optional[Unit]:
@@ -457,6 +502,17 @@ class ProfileNutrientConstraint(relay.Node):
             int(self.reference_nutrient_id.node_id)
         )
 
+    @strawberry.field
+    async def reference_nutrient_category(
+        self, info: Info
+    ) -> Optional[NutrientCategory]:
+        if self.reference_nutrient_category_id is None:
+            return None
+
+        return await info.context.loaders.nutrient_category.load(
+            int(self.reference_nutrient_category_id.node_id)
+        )
+
     @staticmethod
     def from_model(
         constraint: models.ProfileNutrientConstraint,
@@ -464,7 +520,17 @@ class ProfileNutrientConstraint(relay.Node):
         return ProfileNutrientConstraint(
             id=strawberry_id(constraint.id),
             profile_id=global_id(Profile, constraint.profile_id),
-            nutrient_id=global_id(Nutrient, constraint.nutrient_id),
+            nutrient_id=(
+                global_id(Nutrient, constraint.nutrient_id)
+                if constraint.nutrient_id is not None
+                else None
+            ),
+            nutrient_category_id=(
+                global_id(NutrientCategory, constraint.nutrient_category_id)
+                if constraint.nutrient_category_id is not None
+                else None
+            ),
+            type=NutrientConstraintType(constraint.type),
             mode=NutrientConstraintMode(constraint.mode),
             operator=ConstraintOperator(constraint.operator),
             literal_unit_id=(
@@ -476,6 +542,11 @@ class ProfileNutrientConstraint(relay.Node):
             reference_nutrient_id=(
                 global_id(Nutrient, constraint.reference_nutrient_id)
                 if constraint.reference_nutrient_id is not None
+                else None
+            ),
+            reference_nutrient_category_id=(
+                global_id(NutrientCategory, constraint.reference_nutrient_category_id)
+                if constraint.reference_nutrient_category_id is not None
                 else None
             ),
         )
@@ -530,6 +601,15 @@ class Profile(relay.Node):
     @strawberry.field
     async def nutrient_constraints(self, info: Info) -> list[ProfileNutrientConstraint]:
         return await resolvers.profiles.resolve_profile_nutrient_constraints(
+            info,
+            int(self.id),
+        )
+
+    @strawberry.field
+    async def ingredient_nutrient_values(
+        self, info: Info
+    ) -> list[ProfileIngredientNutrientValue]:
+        return await resolvers.profiles.resolve_profile_ingredient_nutrient_values(
             info,
             int(self.id),
         )
@@ -657,45 +737,57 @@ class UpdateProfileConstraintInput:
 @strawberry.input
 class CreateProfileIngredientConstraintInput:
     profile_id: relay.GlobalID
-    ingredient_id: relay.GlobalID
+    ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    ingredient_category_id: relay.GlobalID | None = strawberry.UNSET
+    type: IngredientConstraintType
     mode: IngredientConstraintMode
     operator: ConstraintOperator
     literal_unit_id: relay.GlobalID | None = strawberry.UNSET
     literal_value: float | None = strawberry.UNSET
     reference_ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    reference_ingredient_category_id: relay.GlobalID | None = strawberry.UNSET
 
 
 @strawberry.input
 class UpdateProfileIngredientConstraintInput:
     id: relay.GlobalID
     ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    ingredient_category_id: relay.GlobalID | None = strawberry.UNSET
+    type: IngredientConstraintType | None = strawberry.UNSET
     mode: IngredientConstraintMode | None = strawberry.UNSET
     operator: ConstraintOperator | None = strawberry.UNSET
     literal_unit_id: relay.GlobalID | None = strawberry.UNSET
     literal_value: float | None = strawberry.UNSET
     reference_ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    reference_ingredient_category_id: relay.GlobalID | None = strawberry.UNSET
 
 
 @strawberry.input
 class CreateProfileNutrientConstraintInput:
     profile_id: relay.GlobalID
-    nutrient_id: relay.GlobalID
+    nutrient_id: relay.GlobalID | None = strawberry.UNSET
+    nutrient_category_id: relay.GlobalID | None = strawberry.UNSET
+    type: NutrientConstraintType
     mode: NutrientConstraintMode
     operator: ConstraintOperator
     literal_unit_id: relay.GlobalID | None = strawberry.UNSET
     literal_value: float | None = strawberry.UNSET
     reference_nutrient_id: relay.GlobalID | None = strawberry.UNSET
+    reference_nutrient_category_id: relay.GlobalID | None = strawberry.UNSET
 
 
 @strawberry.input
 class UpdateProfileNutrientConstraintInput:
     id: relay.GlobalID
     nutrient_id: relay.GlobalID | None = strawberry.UNSET
+    nutrient_category_id: relay.GlobalID | None = strawberry.UNSET
+    type: NutrientConstraintType | None = strawberry.UNSET
     mode: NutrientConstraintMode | None = strawberry.UNSET
     operator: ConstraintOperator | None = strawberry.UNSET
     literal_unit_id: relay.GlobalID | None = strawberry.UNSET
     literal_value: float | None = strawberry.UNSET
     reference_nutrient_id: relay.GlobalID | None = strawberry.UNSET
+    reference_nutrient_category_id: relay.GlobalID | None = strawberry.UNSET
 
 
 @strawberry.input
@@ -710,22 +802,10 @@ class CreateProfileIngredientNutrientValueInput:
 @strawberry.input
 class UpdateProfileIngredientNutrientValueInput:
     id: relay.GlobalID
+    ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    nutrient_id: relay.GlobalID | None = strawberry.UNSET
     value: float | None = strawberry.UNSET
     unit_id: relay.GlobalID | None = strawberry.UNSET
-
-
-@strawberry.input
-class CreateProfilePandalistRuleInput:
-    profile_id: relay.GlobalID
-    scope: ProfilePandalistScope
-    mode: ProfilePandalistMode
-
-
-@strawberry.input
-class UpdateProfilePandalistRuleInput:
-    id: relay.GlobalID
-    scope: ProfilePandalistScope | None = strawberry.UNSET
-    mode: ProfilePandalistMode | None = strawberry.UNSET
 
 
 @strawberry.type
@@ -850,10 +930,6 @@ class Mutation:
             permission_classes=[IsAuthenticatedWithOrganization],
         )
     )
-    create_profile_pandalist_rule: ProfilePandalistRule = strawberry.field(
-        resolver=mutations.profiles.create_profile_pandalist_rule,
-        permission_classes=[IsAuthenticatedWithOrganization],
-    )
     update_profile: Profile = strawberry.field(
         resolver=mutations.profiles.update_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -878,10 +954,6 @@ class Mutation:
             permission_classes=[IsAuthenticatedWithOrganization],
         )
     )
-    update_profile_pandalist_rule: ProfilePandalistRule = strawberry.field(
-        resolver=mutations.profiles.update_profile_pandalist_rule,
-        permission_classes=[IsAuthenticatedWithOrganization],
-    )
     delete_profile: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -900,10 +972,6 @@ class Mutation:
     )
     delete_profile_ingredient_nutrient_value: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile_ingredient_nutrient_value,
-        permission_classes=[IsAuthenticatedWithOrganization],
-    )
-    delete_profile_pandalist_rule: DeletedNode = strawberry.field(
-        resolver=mutations.profiles.delete_profile_pandalist_rule,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 

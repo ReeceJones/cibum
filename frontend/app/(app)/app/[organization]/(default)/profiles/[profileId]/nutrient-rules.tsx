@@ -18,16 +18,19 @@ import { useProfile } from "./use-profile";
 import {
   ConstraintOperator,
   NutrientConstraintMode,
+  NutrientConstraintType,
   ProfileNutrientConstraint,
 } from "@/lib/gql/graphql";
 import { Button } from "@/components/ui/button";
 import {
   Icon123,
+  IconCategory,
   IconDeviceFloppy,
   IconDotsVertical,
   IconEdit,
   IconGrowth,
   IconSquareRoundedPlus,
+  IconTestPipe,
   IconTrash,
 } from "@tabler/icons-react";
 import {
@@ -47,6 +50,7 @@ import { useState } from "react";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -92,37 +96,90 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deleteProfileNutrientConstraintMutation } from "@/lib/mutations/delete-profile-nutrient-constraint";
+import { VirtualizedNutrientCategoryComboBox } from "@/components/ui/nutrient-category-combobox";
+import { Switch } from "@/components/ui/switch";
 
 function NutrientRuleForm({
   form,
 }: {
   form: UseFormReturn<z.infer<typeof profileNutrientConstraintSchema>>;
 }) {
-  const [mode] = useWatch({
+  const [mode, type] = useWatch({
     control: form.control,
-    name: ["mode"],
+    name: ["mode", "type"],
   });
 
   return (
     <div className="space-y-2">
-      <div className="flex items-end space-x-2">
-        <FormField
-          control={form.control}
-          name="nutrient"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>Nutrient</FormLabel>
-              <FormMessage />
-              <FormControl>
-                <VirtualizedNutrientComboBox
-                  required
-                  className="w-full"
-                  {...field}
+      <FormField
+        control={form.control}
+        name="type"
+        render={({ field }) => (
+          <FormItem>
+            <div className="border rounded-md p-3 flex justify-between items-center">
+              <div>
+                <FormLabel>Ingredient Category</FormLabel>
+                <FormDescription>
+                  Apply this rule to an entire ingredient category.
+                </FormDescription>
+              </div>
+              <div>
+                <Switch
+                  checked={
+                    field.value === NutrientConstraintType.NutrientCategory
+                  }
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      field.onChange(NutrientConstraintType.NutrientCategory);
+                    } else {
+                      field.onChange(NutrientConstraintType.Nutrient);
+                    }
+                  }}
                 />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+              </div>
+            </div>
+          </FormItem>
+        )}
+      />
+      <div className="flex items-end space-x-2">
+        {type === NutrientConstraintType.Nutrient && (
+          <FormField
+            control={form.control}
+            name="nutrient"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Nutrient</FormLabel>
+                <FormMessage />
+                <FormControl>
+                  <VirtualizedNutrientComboBox
+                    required
+                    className="w-full"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
+        {type === NutrientConstraintType.NutrientCategory && (
+          <FormField
+            control={form.control}
+            name="nutrientCategory"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Nutrient Category</FormLabel>
+                <FormMessage />
+                <FormControl>
+                  <VirtualizedNutrientCategoryComboBox
+                    required
+                    className="w-full"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="operator"
@@ -199,25 +256,46 @@ function NutrientRuleForm({
             />
           </>
         )}
-        {mode === NutrientConstraintMode.Nutrient && (
-          <FormField
-            control={form.control}
-            name="referenceNutrient"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Reference Nutrient</FormLabel>
-                <FormMessage />
-                <FormControl>
-                  <VirtualizedNutrientComboBox
-                    required
-                    className="w-full"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        )}
+        {mode === NutrientConstraintMode.Reference &&
+          type === NutrientConstraintType.Nutrient && (
+            <FormField
+              control={form.control}
+              name="referenceNutrient"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Reference Nutrient</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <VirtualizedNutrientComboBox
+                      required
+                      className="w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
+        {mode === NutrientConstraintMode.Reference &&
+          type === NutrientConstraintType.NutrientCategory && (
+            <FormField
+              control={form.control}
+              name="referenceNutrientCategory"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Reference Nutrient Category</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <VirtualizedNutrientCategoryComboBox
+                      required
+                      className="w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
         <FormField
           control={form.control}
           name="mode"
@@ -232,28 +310,40 @@ function NutrientRuleForm({
                         variant="outline"
                         className="w-10 p-0"
                         onClick={() => {
-                          if (field.value === NutrientConstraintMode.Nutrient) {
+                          if (
+                            field.value === NutrientConstraintMode.Reference
+                          ) {
                             field.onChange(NutrientConstraintMode.Literal);
                           } else {
-                            field.onChange(NutrientConstraintMode.Nutrient);
+                            field.onChange(NutrientConstraintMode.Reference);
                           }
                         }}
                       >
-                        {field.value === NutrientConstraintMode.Nutrient && (
+                        {field.value === NutrientConstraintMode.Reference && (
                           <Icon123 />
                         )}
-                        {field.value === NutrientConstraintMode.Literal && (
-                          <IconGrowth />
-                        )}
+                        {field.value === NutrientConstraintMode.Literal &&
+                          type == NutrientConstraintType.Nutrient && (
+                            <IconTestPipe />
+                          )}
+                        {field.value === NutrientConstraintMode.Literal &&
+                          type == NutrientConstraintType.NutrientCategory && (
+                            <IconCategory />
+                          )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {field.value === NutrientConstraintMode.Nutrient && (
+                      {field.value === NutrientConstraintMode.Reference && (
                         <p>Switch to hardcoded-value</p>
                       )}
-                      {field.value === NutrientConstraintMode.Literal && (
-                        <p>Switch to nutrient comparison</p>
-                      )}
+                      {field.value === NutrientConstraintMode.Literal &&
+                        type === NutrientConstraintType.Nutrient && (
+                          <p>Switch to nutrient comparison</p>
+                        )}
+                      {field.value === NutrientConstraintMode.Literal &&
+                        type === NutrientConstraintType.NutrientCategory && (
+                          <p>Switch to nutrient category comparison</p>
+                        )}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -272,6 +362,7 @@ function AddNutrientRuleDialogContent({ onSave }: { onSave: () => void }) {
     defaultValues: {
       id: crypto.randomUUID(),
       mode: NutrientConstraintMode.Literal,
+      type: NutrientConstraintType.Nutrient,
     },
   });
   const createProfileNutrientConstraint = useGraphQLMutation(
@@ -306,12 +397,15 @@ function AddNutrientRuleDialogContent({ onSave }: { onSave: () => void }) {
     await mutation.mutateAsync({
       input: {
         profileId: profile.id,
+        type: data.type,
         mode: data.mode,
         operator: data.operator,
-        nutrientId: data.nutrient.id,
+        nutrientId: data.nutrient?.id,
+        nutrientCategoryId: data.nutrientCategory?.id,
         literalValue: data.literalValue,
         literalUnitId: data.literalUnit?.id,
-        referenceNutrientId: data.referenceNutrient?.id,
+        referenceNutrientId: data.referenceNutrient?.id ?? null,
+        referenceNutrientCategoryId: data.referenceNutrientCategory?.id ?? null,
       },
     });
   }
@@ -382,12 +476,21 @@ function EditNutrientRuleDialogContent({
     resolver: zodResolver(profileNutrientConstraintSchema),
     defaultValues: {
       id: nutrientRule.id,
+      type: nutrientRule.type,
       mode: nutrientRule.mode,
       operator: nutrientRule.operator,
-      nutrient: {
-        id: nutrientRule.nutrient!.id,
-        data: nutrientRule.nutrient!,
-      },
+      nutrient: nutrientRule.nutrient
+        ? {
+            id: nutrientRule.nutrient.id,
+            data: nutrientRule.nutrient,
+          }
+        : undefined,
+      nutrientCategory: nutrientRule.nutrientCategory
+        ? {
+            id: nutrientRule.nutrientCategory.id,
+            data: nutrientRule.nutrientCategory,
+          }
+        : undefined,
       literalValue: nutrientRule.literalValue ?? undefined,
       literalUnit: nutrientRule.literalUnit
         ? {
@@ -399,6 +502,12 @@ function EditNutrientRuleDialogContent({
         ? {
             id: nutrientRule.referenceNutrient.id,
             data: nutrientRule.referenceNutrient,
+          }
+        : undefined,
+      referenceNutrientCategory: nutrientRule.referenceNutrientCategory
+        ? {
+            id: nutrientRule.referenceNutrientCategory.id,
+            data: nutrientRule.referenceNutrientCategory,
           }
         : undefined,
     },
@@ -434,12 +543,15 @@ function EditNutrientRuleDialogContent({
     await mutation.mutateAsync({
       input: {
         id: nutrientRule.id,
+        type: data.type,
         mode: data.mode,
         operator: data.operator,
-        nutrientId: data.nutrient.id,
+        nutrientId: data.nutrient?.id ?? null,
+        nutrientCategoryId: data.nutrientCategory?.id ?? null,
         literalValue: data.literalValue,
         literalUnitId: data.literalUnit?.id,
-        referenceNutrientId: data.referenceNutrient?.id,
+        referenceNutrientId: data.referenceNutrient?.id ?? null,
+        referenceNutrientCategoryId: data.referenceNutrientCategory?.id ?? null,
       },
     });
   }
@@ -599,13 +711,19 @@ function NutrientRule({
   const [open, setOpen] = useState(false);
   return (
     <TableRow>
-      <TableCell>{nutrientRule.nutrient!.name}</TableCell>
+      <TableCell>
+        {nutrientRule.type === NutrientConstraintType.Nutrient
+          ? nutrientRule.nutrient!.name
+          : nutrientRule.nutrientCategory!.name}
+      </TableCell>
       <TableCell className="text-center">
         {mapOperator(nutrientRule.operator)}
       </TableCell>
       <TableCell className="text-right">
-        {nutrientRule.mode === NutrientConstraintMode.Nutrient &&
-          nutrientRule.referenceNutrient!.name}
+        {nutrientRule.mode === NutrientConstraintMode.Reference &&
+          (nutrientRule.type === NutrientConstraintType.Nutrient
+            ? nutrientRule.referenceNutrient!.name
+            : nutrientRule.referenceNutrientCategory!.name)}
         {nutrientRule.mode === NutrientConstraintMode.Literal && (
           <span>
             {nutrientRule.literalValue} {nutrientRule.literalUnit!.symbol}

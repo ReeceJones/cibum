@@ -9,10 +9,15 @@ query GetProfile($profileId: GlobalID!) {
       description
       ingredientConstraints {
         id
+        type
         mode
         operator
         literalValue
         ingredient {
+          id
+          name
+        }
+        ingredientCategory {
           id
           name
         }
@@ -24,13 +29,22 @@ query GetProfile($profileId: GlobalID!) {
           id
           name
         }
+        referenceIngredientCategory {
+          id
+          name
+        }
       }
       nutrientConstraints {
         id
+        type
         mode
         operator
         literalValue
         nutrient {
+          id
+          name
+        }
+        nutrientCategory {
           id
           name
         }
@@ -39,6 +53,26 @@ query GetProfile($profileId: GlobalID!) {
           symbol
         }
         referenceNutrient {
+          id
+          name
+        }
+        referenceNutrientCategory {
+          id
+          name
+        }
+      }
+      ingredientNutrientValues {
+        id
+        value
+        unit {
+          id
+          symbol
+        }
+        ingredient {
+          id
+          name
+        }
+        nutrient {
           id
           name
         }
