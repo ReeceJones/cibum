@@ -4,12 +4,11 @@ import logging
 from typing import Literal
 
 import aiofiles
+from app import models
+from app.db import DB
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app import models
-from app.db import DB
 
 
 class ManagedNutrientNode(BaseModel):
@@ -31,9 +30,10 @@ class ManagedIngredientNode(BaseModel):
 class ManagedUnitNode(BaseModel):
     id: str
     name: str
+    type: Literal["CONCENTRATION"] | Literal["ENERGY"]
     symbol: str
-    kilogram_multiplier: float
-    kilogram_offset: float
+    base_unit_multiplier: float
+    base_unit_offset: float
 
 
 async def migrate_managed_nutrient_category(
@@ -236,9 +236,10 @@ async def run_unit_migrations() -> None:
             node = models.Unit(
                 id=unit.id,
                 name=unit.name,
+                type=unit.type,
                 symbol=unit.symbol,
-                kilogram_multiplier=unit.kilogram_multiplier,
-                kilogram_offset=unit.kilogram_offset,
+                base_unit_multiplier=unit.base_unit_multiplier,
+                base_unit_offset=unit.base_unit_offset,
             )
             await db.merge(node)
         await db.commit()

@@ -3,13 +3,12 @@ from typing import Iterable, Optional
 
 import strawberry
 import strawberry.fastapi
-from strawberry import relay
-
 from app import models
 from app.graphql import mutations, resolvers
 from app.graphql.auth import IsAuthenticatedWithOrganization
 from app.graphql.context import Info, get_context
 from app.graphql.utils import global_id, strawberry_id
+from strawberry import relay
 
 
 @strawberry.type
@@ -278,13 +277,20 @@ class NutrientConstraintMode(Enum):
     REFERENCE = "REFERENCE"
 
 
+@strawberry.enum
+class UnitType(Enum):
+    CONCENTRATION = "CONCENTRATION"
+    ENERGY = "ENERGY"
+
+
 @strawberry.type
 class Unit(relay.Node):
     id: relay.NodeID[strawberry.ID]
     name: str
     symbol: str
-    kilogram_multiplier: float
-    kilogram_offset: float
+    type: UnitType
+    base_unit_multiplier: float
+    base_unit_offset: float
 
     @staticmethod
     def from_model(unit: models.Unit) -> "Unit":
@@ -292,8 +298,9 @@ class Unit(relay.Node):
             id=strawberry_id(unit.id),
             name=unit.name,
             symbol=unit.symbol,
-            kilogram_multiplier=unit.kilogram_multiplier,
-            kilogram_offset=unit.kilogram_offset,
+            type=UnitType(unit.type),
+            base_unit_multiplier=unit.base_unit_multiplier,
+            base_unit_offset=unit.base_unit_offset,
         )
 
     @classmethod
@@ -582,6 +589,99 @@ class ProfileConstraint(relay.Node):
 
 
 @strawberry.type
+class ProfileNutrientValue(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    profile_id: relay.GlobalID
+    nutrient_id: relay.GlobalID
+    gross_energy: float | None
+    gross_energy_unit_id: relay.GlobalID | None
+    digestible_energy: float | None
+    digestible_energy_unit_id: relay.GlobalID | None
+    metabolizable_energy: float | None
+    metabolizable_energy_unit_id: relay.GlobalID | None
+    net_energy: float | None
+    net_energy_unit_id: relay.GlobalID | None
+
+    @strawberry.field
+    async def nutrient(self, info: Info) -> Nutrient:
+        return await info.context.loaders.nutrient.load(int(self.nutrient_id.node_id))
+
+    @strawberry.field
+    async def gross_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.gross_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.gross_energy_unit_id.node_id)
+
+    @strawberry.field
+    async def digestible_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.digestible_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.digestible_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def metabolizable_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.metabolizable_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.metabolizable_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def net_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.net_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.net_energy_unit_id.node_id)
+
+    @staticmethod
+    def from_model(
+        value: models.ProfileNutrientValue,
+    ) -> "ProfileNutrientValue":
+        return ProfileNutrientValue(
+            id=strawberry_id(value.id),
+            profile_id=global_id(Profile, value.profile_id),
+            nutrient_id=global_id(Nutrient, value.nutrient_id),
+            gross_energy=value.gross_energy,
+            gross_energy_unit_id=(
+                global_id(Unit, value.gross_energy_unit_id)
+                if value.gross_energy_unit_id is not None
+                else None
+            ),
+            digestible_energy=value.digestible_energy,
+            digestible_energy_unit_id=(
+                global_id(Unit, value.digestible_energy_unit_id)
+                if value.digestible_energy_unit_id is not None
+                else None
+            ),
+            metabolizable_energy=value.metabolizable_energy,
+            metabolizable_energy_unit_id=(
+                global_id(Unit, value.metabolizable_energy_unit_id)
+                if value.metabolizable_energy_unit_id is not None
+                else None
+            ),
+            net_energy=value.net_energy,
+            net_energy_unit_id=(
+                global_id(Unit, value.net_energy_unit_id)
+                if value.net_energy_unit_id is not None
+                else None
+            ),
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["ProfileNutrientValue"]:
+        return await resolvers.profiles.resolve_profile_nutrient_value_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
+@strawberry.type
 class Profile(relay.Node):
     id: relay.NodeID[strawberry.ID]
     organization_id: str | None
@@ -610,6 +710,13 @@ class Profile(relay.Node):
         self, info: Info
     ) -> list[ProfileIngredientNutrientValue]:
         return await resolvers.profiles.resolve_profile_ingredient_nutrient_values(
+            info,
+            int(self.id),
+        )
+
+    @strawberry.field
+    async def nutrient_values(self, info: Info) -> list[ProfileNutrientValue]:
+        return await resolvers.profiles.resolve_profile_nutrient_values(
             info,
             int(self.id),
         )
@@ -808,6 +915,34 @@ class UpdateProfileIngredientNutrientValueInput:
     unit_id: relay.GlobalID | None = strawberry.UNSET
 
 
+@strawberry.input
+class CreateProfileNutrientValueInput:
+    profile_id: relay.GlobalID
+    nutrient_id: relay.GlobalID
+    gross_energy: float | None = strawberry.UNSET
+    gross_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    digestible_energy: float | None = strawberry.UNSET
+    digestible_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    metabolizable_energy: float | None = strawberry.UNSET
+    metabolizable_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    net_energy: float | None = strawberry.UNSET
+    net_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+
+
+@strawberry.input
+class UpdateProfileNutrientValueInput:
+    id: relay.GlobalID
+    nutrient_id: relay.GlobalID | None = strawberry.UNSET
+    gross_energy: float | None = strawberry.UNSET
+    gross_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    digestible_energy: float | None = strawberry.UNSET
+    digestible_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    metabolizable_energy: float | None = strawberry.UNSET
+    metabolizable_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+    net_energy: float | None = strawberry.UNSET
+    net_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
+
+
 @strawberry.type
 class Query:
     node: relay.Node = relay.node()
@@ -930,6 +1065,10 @@ class Mutation:
             permission_classes=[IsAuthenticatedWithOrganization],
         )
     )
+    create_profile_nutrient_value: ProfileNutrientValue = strawberry.field(
+        resolver=mutations.profiles.create_profile_nutrient_value,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
     update_profile: Profile = strawberry.field(
         resolver=mutations.profiles.update_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -954,6 +1093,10 @@ class Mutation:
             permission_classes=[IsAuthenticatedWithOrganization],
         )
     )
+    update_profile_nutrient_value: ProfileNutrientValue = strawberry.field(
+        resolver=mutations.profiles.update_profile_nutrient_value,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
     delete_profile: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -972,6 +1115,10 @@ class Mutation:
     )
     delete_profile_ingredient_nutrient_value: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile_ingredient_nutrient_value,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    delete_profile_nutrient_value: DeletedNode = strawberry.field(
+        resolver=mutations.profiles.delete_profile_nutrient_value,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 

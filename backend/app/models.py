@@ -216,9 +216,10 @@ class ManagedIngredientOverride(Base):
 class Unit(Base):
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(index=True)
+    type: Mapped[str] = mapped_column(index=True)
     symbol: Mapped[str] = mapped_column(index=True)
-    kilogram_multiplier: Mapped[float] = mapped_column(default=1.0)
-    kilogram_offset: Mapped[float] = mapped_column(default=0.0)
+    base_unit_multiplier: Mapped[float] = mapped_column(default=1.0)
+    base_unit_offset: Mapped[float] = mapped_column(default=0.0)
 
 
 class ProfileIngredientNutrientValue(Base):
@@ -289,6 +290,35 @@ class ProfileConstraint(Base):
     )
 
 
+class ProfileNutrientValue(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    nutrient_id: Mapped[int] = mapped_column(ForeignKey("nutrient.id"))
+    gross_energy: Mapped[float | None]
+    gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    digestible_energy: Mapped[float | None]
+    digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    metabolizable_energy: Mapped[float | None]
+    metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(
+        ForeignKey("unit.id")
+    )
+    net_energy: Mapped[float | None]
+    net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_nutrient_values"
+    )
+
+
+class ProfileIngredientCost(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"))
+    mode: Mapped[str]
+    literal_cost: Mapped[float | None]
+    literal_cost_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+
+
 class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     organization_id: Mapped[str | None] = mapped_column(ForeignKey("organization.id"))
@@ -318,4 +348,8 @@ class Profile(Base):
             "ProfileIngredientNutrientValue",
             back_populates="profile",
         )
+    )
+    profile_nutrient_values: Mapped[list[ProfileNutrientValue]] = relationship(
+        "ProfileNutrientValue",
+        back_populates="profile",
     )

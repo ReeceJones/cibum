@@ -1,87 +1,114 @@
 import { graphql } from "../gql";
 
 export const getProfileQuery = graphql(`
-query GetProfile($profileId: GlobalID!) {
-  node(id: $profileId) {
-    ... on Profile {
-      id
-      name
-      description
-      ingredientConstraints {
+  query GetProfile($profileId: GlobalID!) {
+    node(id: $profileId) {
+      ... on Profile {
         id
-        type
-        mode
-        operator
-        literalValue
-        ingredient {
+        name
+        description
+        ingredientConstraints {
           id
-          name
+          type
+          mode
+          operator
+          literalValue
+          ingredient {
+            id
+            name
+          }
+          ingredientCategory {
+            id
+            name
+          }
+          literalUnit {
+            id
+            symbol
+          }
+          referenceIngredient {
+            id
+            name
+          }
+          referenceIngredientCategory {
+            id
+            name
+          }
         }
-        ingredientCategory {
+        nutrientConstraints {
           id
-          name
+          type
+          mode
+          operator
+          literalValue
+          nutrient {
+            id
+            name
+          }
+          nutrientCategory {
+            id
+            name
+          }
+          literalUnit {
+            id
+            symbol
+          }
+          referenceNutrient {
+            id
+            name
+          }
+          referenceNutrientCategory {
+            id
+            name
+          }
         }
-        literalUnit {
+        ingredientNutrientValues {
           id
-          symbol
+          value
+          unit {
+            id
+            symbol
+          }
+          ingredient {
+            id
+            name
+          }
+          nutrient {
+            id
+            name
+          }
         }
-        referenceIngredient {
+        nutrientValues {
           id
-          name
-        }
-        referenceIngredientCategory {
-          id
-          name
-        }
-      }
-      nutrientConstraints {
-        id
-        type
-        mode
-        operator
-        literalValue
-        nutrient {
-          id
-          name
-        }
-        nutrientCategory {
-          id
-          name
-        }
-        literalUnit {
-          id
-          symbol
-        }
-        referenceNutrient {
-          id
-          name
-        }
-        referenceNutrientCategory {
-          id
-          name
-        }
-      }
-      ingredientNutrientValues {
-        id
-        value
-        unit {
-          id
-          symbol
-        }
-        ingredient {
-          id
-          name
-        }
-        nutrient {
-          id
-          name
+          grossEnergy
+          digestibleEnergy
+          metabolizableEnergy
+          netEnergy
+          nutrient {
+            id
+            name
+          }
+          grossEnergyUnit {
+            id
+            symbol
+          }
+          digestibleEnergyUnit {
+            id
+            symbol
+          }
+          metabolizableEnergyUnit {
+            id
+            symbol
+          }
+          netEnergyUnit {
+            id
+            symbol
+          }
         }
       }
     }
   }
-}
-`)
+`);
 
-export function getProfileKey({ profileId }: { profileId: string}) {
+export function getProfileKey({ profileId }: { profileId: string }) {
   return ["GetProfile", { profileId }];
 }

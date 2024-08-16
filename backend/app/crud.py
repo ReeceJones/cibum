@@ -1,7 +1,6 @@
+from app import models
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app import models
 
 
 async def ensure_user(

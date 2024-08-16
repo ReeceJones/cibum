@@ -239,3 +239,56 @@ async def resolve_profile_ingredient_nutrient_values(
         )
 
         return [schemas.ProfileIngredientNutrientValue.from_model(v) for v in values]
+
+
+async def resolve_profile_nutrient_value_nodes(
+    info: "context.Info", value_ids: Iterable[str], required: bool = False
+) -> list[Optional["schemas.ProfileNutrientValue"]]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    nodes = [int(x) for x in value_ids]
+    async with DB.async_session() as db:
+        values = await db.scalars(
+            select(models.ProfileNutrientValue)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.ProfileNutrientValue.id.in_(nodes),
+                models.ProfileNutrientValue.archived == False,
+            )
+        )
+
+        return utils.make_relay_result(
+            nodes,
+            values,
+            required,
+            lambda x: x.id,
+            schemas.ProfileNutrientValue.from_model,
+        )
+
+
+async def resolve_profile_nutrient_values(
+    info: "context.Info", profile_id: int
+) -> list["schemas.ProfileNutrientValue"]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        values = await db.scalars(
+            select(models.ProfileNutrientValue)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.Profile.id == profile_id,
+                models.ProfileNutrientValue.archived == False,
+            )
+        )
+
+        return [schemas.ProfileNutrientValue.from_model(v) for v in values]

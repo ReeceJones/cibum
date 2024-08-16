@@ -2,8 +2,8 @@
   "customLocalFormatters.formatters": [
     {
       "languages": ["python"],
-      "command": "./scripts/format.sh",
-    },
+      "command": "./scripts/format.sh"
+    }
   ],
   "[python]": {
     "editor.formatOnSave": true,
@@ -12,5 +12,5 @@
     "editor.defaultFormatter": "jkillian.custom-local-formatters"
   },
   "python.analysis.typeCheckingMode": "standard",
-  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoImportCompletions": true
 }

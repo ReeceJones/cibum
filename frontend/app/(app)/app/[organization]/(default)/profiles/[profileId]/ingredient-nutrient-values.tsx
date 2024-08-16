@@ -53,7 +53,7 @@ import { VirtualizedIngredientComboBox } from "@/components/ui/ingredient-combob
 import { VirtualizedNutrientComboBox } from "@/components/ui/nutrient-combobox";
 import { Input } from "@/components/ui/input";
 import { VirtualizedUnitComboBox } from "@/components/ui/unit-combobox";
-import { ProfileIngredientNutrientValue } from "@/lib/gql/graphql";
+import { ProfileIngredientNutrientValue, UnitType } from "@/lib/gql/graphql";
 import {
   Popover,
   PopoverContent,
@@ -144,7 +144,11 @@ function IngredientNutrientValueForm({
               <FormMessage />
               <div className="w-full">
                 <FormControl>
-                  <VirtualizedUnitComboBox required {...field} />
+                  <VirtualizedUnitComboBox
+                    type={UnitType.Concentration}
+                    required
+                    {...field}
+                  />
                 </FormControl>
               </div>
             </FormItem>
@@ -464,10 +468,10 @@ function DeleteIngredientNutrientValueAlertDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center space-x-3">
             <IconTrash size={24} />
-            <span>Delete Ingredient Rule</span>
+            <span>Delete Ingredient Nutrient Value</span>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this ingredient rule?
+            Are you sure you want to delete this ingredient nutrient value?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

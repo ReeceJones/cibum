@@ -5,12 +5,13 @@ import { getAllUnitsKey, getAllUnitsQuery } from "@/lib/queries/get-all-units";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox, ComboboxProps } from "./combobox";
-import { Unit } from "@/lib/gql/graphql";
+import { Unit, UnitType } from "@/lib/gql/graphql";
 import { asNodeIdObject, NodeIdObject } from "@/lib/schemas/common";
 
 export function VirtualizedUnitComboBox({
+  type,
   ...props
-}: Partial<ComboboxProps<NodeIdObject<Unit>>>) {
+}: Partial<ComboboxProps<NodeIdObject<Unit>>> & { type?: UnitType }) {
   const { orgId, isLoaded } = useAuth();
   const getAllUnits = useGraphQLQuery(getAllUnitsQuery);
   const { data, status } = useQuery({
@@ -22,7 +23,11 @@ export function VirtualizedUnitComboBox({
   return (
     <Combobox
       loading={status === "pending"}
-      data={data?.units.edges.map((e) => asNodeIdObject(e.node as Unit)) ?? []}
+      data={
+        data?.units.edges
+          .filter((e) => type === undefined || e.node.type === type)
+          .map((e) => asNodeIdObject(e.node as Unit)) ?? []
+      }
       // @ts-expect-error
       getKey={(item) => item?.data.id}
       // @ts-expect-error

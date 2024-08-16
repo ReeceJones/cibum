@@ -1,9 +1,8 @@
-from sqlalchemy.orm import selectinload
-
 from app import models
 from app.db import DB
 from app.graphql import context, schemas, utils
 from app.graphql.access import AuthError
+from sqlalchemy.orm import selectinload
 
 
 async def create_profile(
@@ -992,6 +991,193 @@ async def delete_profile_ingredient_nutrient_value(
                 raise Exception("Profile ingredient nutrient value not found")
 
             profile_ingredient_nutrient_value.archived = True
+
+        await db.commit()
+
+        return schemas.DeletedNode(success=True)
+
+
+async def create_profile_nutrient_value(
+    info: context.Info, input: "schemas.CreateProfileNutrientValueInput"
+) -> "schemas.ProfileNutrientValue":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        profile = await db.get(models.Profile, int(input.profile_id.node_id))
+
+        if profile is None or (
+            profile.organization_id is not None
+            and profile.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Profile not found")
+
+        nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+
+        if nutrient is None or (
+            nutrient.organization_id is not None
+            and nutrient.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Nutrient not found")
+
+        profile_nutrient_value = models.ProfileNutrientValue(
+            profile_id=int(input.profile_id.node_id),
+            nutrient_id=int(input.nutrient_id.node_id),
+            gross_energy=(
+                input.gross_energy if utils.is_value(input.gross_energy) else None
+            ),
+            gross_energy_unit_id=(
+                input.gross_energy_unit_id.node_id
+                if utils.is_value(input.gross_energy_unit_id)
+                else None
+            ),
+            digestible_energy=(
+                input.digestible_energy
+                if utils.is_value(input.digestible_energy)
+                else None
+            ),
+            digestible_energy_unit_id=(
+                input.digestible_energy_unit_id.node_id
+                if utils.is_value(input.digestible_energy_unit_id)
+                else None
+            ),
+            metabolizable_energy=(
+                input.metabolizable_energy
+                if utils.is_value(input.metabolizable_energy)
+                else None
+            ),
+            metabolizable_energy_unit_id=(
+                input.metabolizable_energy_unit_id.node_id
+                if utils.is_value(input.metabolizable_energy_unit_id)
+                else None
+            ),
+            net_energy=input.net_energy if utils.is_value(input.net_energy) else None,
+            net_energy_unit_id=(
+                input.net_energy_unit_id.node_id
+                if utils.is_value(input.net_energy_unit_id)
+                else None
+            ),
+        )
+        db.add(profile_nutrient_value)
+        await db.commit()
+
+        return schemas.ProfileNutrientValue.from_model(profile_nutrient_value)
+
+
+async def update_profile_nutrient_value(
+    info: context.Info, input: "schemas.UpdateProfileNutrientValueInput"
+) -> "schemas.ProfileNutrientValue":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        profile_nutrient_value = await db.get(
+            models.ProfileNutrientValue,
+            int(input.id.node_id),
+            options=[
+                selectinload(models.ProfileNutrientValue.profile),
+            ],
+        )
+
+        if profile_nutrient_value is None:
+            raise Exception("Profile nutrient value not found")
+
+        if (
+            profile_nutrient_value.profile.organization_id is not None
+            and profile_nutrient_value.profile.organization_id
+            != info.context.user.org_id
+        ):
+            raise Exception("Profile nutrient value not found")
+
+        if utils.is_set(input.nutrient_id):
+            if input.nutrient_id is None:
+                raise Exception("nutrient_id is required for ProfileNutrientValue")
+
+            nutrient = await db.get(models.Nutrient, int(input.nutrient_id.node_id))
+
+            if nutrient is None:
+                raise Exception("Nutrient not found")
+
+            if (
+                nutrient.organization_id is not None
+                and nutrient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Nutrient not found")
+
+            profile_nutrient_value.nutrient_id = int(input.nutrient_id.node_id)
+
+        if utils.is_set(input.gross_energy):
+            profile_nutrient_value.gross_energy = input.gross_energy
+
+        if utils.is_set(input.gross_energy_unit_id):
+            profile_nutrient_value.gross_energy_unit_id = (
+                input.gross_energy_unit_id.node_id
+                if input.gross_energy_unit_id is not None
+                else None
+            )
+
+        if utils.is_set(input.digestible_energy):
+            profile_nutrient_value.digestible_energy = input.digestible_energy
+
+        if utils.is_set(input.digestible_energy_unit_id):
+            profile_nutrient_value.digestible_energy_unit_id = (
+                input.digestible_energy_unit_id.node_id
+                if input.digestible_energy_unit_id is not None
+                else None
+            )
+
+        if utils.is_set(input.metabolizable_energy):
+            profile_nutrient_value.metabolizable_energy = input.metabolizable_energy
+
+        if utils.is_set(input.metabolizable_energy_unit_id):
+            profile_nutrient_value.metabolizable_energy_unit_id = (
+                input.metabolizable_energy_unit_id.node_id
+                if input.metabolizable_energy_unit_id is not None
+                else None
+            )
+
+        if utils.is_set(input.net_energy):
+            profile_nutrient_value.net_energy = input.net_energy
+
+        if utils.is_set(input.net_energy_unit_id):
+            profile_nutrient_value.net_energy_unit_id = (
+                input.net_energy_unit_id.node_id
+                if input.net_energy_unit_id is not None
+                else None
+            )
+
+        await db.commit()
+
+        return schemas.ProfileNutrientValue.from_model(profile_nutrient_value)
+
+
+async def delete_profile_nutrient_value(
+    info: context.Info, input: "schemas.DeleteNodeInput"
+) -> "schemas.DeletedNode":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        for id in input.ids:
+            profile_nutrient_value = await db.get(
+                models.ProfileNutrientValue,
+                int(id.node_id),
+                options=[
+                    selectinload(models.ProfileNutrientValue.profile),
+                ],
+            )
+
+            if profile_nutrient_value is None:
+                raise Exception("Profile nutrient value not found")
+
+            if (
+                profile_nutrient_value.profile.organization_id is not None
+                and profile_nutrient_value.profile.organization_id
+                != info.context.user.org_id
+            ):
+                raise Exception("Profile nutrient value not found")
+
+            profile_nutrient_value.archived = True
 
         await db.commit()
 

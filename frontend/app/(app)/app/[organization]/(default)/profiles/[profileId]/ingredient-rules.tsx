@@ -20,6 +20,7 @@ import {
   IngredientConstraintMode,
   IngredientConstraintType,
   ProfileIngredientConstraint,
+  UnitType,
 } from "@/lib/gql/graphql";
 import { Button } from "@/components/ui/button";
 import {
@@ -249,7 +250,10 @@ function IngredientRuleForm({
                   <FormMessage />
                   <div className="w-full">
                     <FormControl>
-                      <VirtualizedUnitComboBox {...field} />
+                      <VirtualizedUnitComboBox
+                        type={UnitType.Concentration}
+                        {...field}
+                      />
                     </FormControl>
                   </div>
                 </FormItem>
