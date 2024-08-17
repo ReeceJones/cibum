@@ -95,6 +95,17 @@ async def create_profile_constraint(
     async with DB.async_session() as db:
         profile_constraint = models.ProfileConstraint(
             profile_id=int(input.profile_id.node_id),
+            type=input.type.value,
+            mode=input.mode.value,
+            operator=input.operator.value,
+            literal_unit_id=(
+                input.literal_unit_id.node_id
+                if utils.is_value(input.literal_unit_id)
+                else None
+            ),
+            literal_value=(
+                input.literal_value if utils.is_value(input.literal_value) else None
+            ),
         )
         db.add(profile_constraint)
         await db.commit()
@@ -124,6 +135,31 @@ async def update_profile_constraint(
         ):
             raise Exception("Profile constraint not found")
 
+        if utils.is_set(input.type):
+            if input.type is None:
+                raise Exception("type is required for ProfileConstraint")
+            profile_constraint.type = input.type.value
+
+        if utils.is_set(input.mode):
+            if input.mode is None:
+                raise Exception("mode is required for ProfileConstraint")
+            profile_constraint.mode = input.mode.value
+
+        if utils.is_set(input.operator):
+            if input.operator is None:
+                raise Exception("operator is required for ProfileConstraint")
+            profile_constraint.operator = input.operator.value
+
+        if utils.is_set(input.literal_unit_id):
+            profile_constraint.literal_unit_id = (
+                input.literal_unit_id.node_id
+                if input.literal_unit_id is not None
+                else None
+            )
+
+        if utils.is_set(input.literal_value):
+            profile_constraint.literal_value = input.literal_value
+
         await db.commit()
 
         return schemas.ProfileConstraint.from_model(profile_constraint)
@@ -137,7 +173,13 @@ async def delete_profile_constraint(
 
     async with DB.async_session() as db:
         for id in input.ids:
-            profile_constraint = await db.get(models.ProfileConstraint, int(id.node_id))
+            profile_constraint = await db.get(
+                models.ProfileConstraint,
+                int(id.node_id),
+                options=[
+                    selectinload(models.ProfileConstraint.profile),
+                ],
+            )
 
             if profile_constraint is None:
                 raise Exception("Profile constraint not found")

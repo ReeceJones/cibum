@@ -117,6 +117,17 @@ export const getProfileQuery = graphql(`
             symbol
           }
         }
+        constraints {
+          id
+          type
+          mode
+          operator
+          literalValue
+          literalUnit {
+            id
+            symbol
+          }
+        }
       }
     }
   }

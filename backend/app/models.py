@@ -284,6 +284,11 @@ class ProfileNutrientConstraint(Base):
 class ProfileConstraint(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    type: Mapped[str]
+    mode: Mapped[str]
+    operator: Mapped[str]
+    literal_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    literal_value: Mapped[float | None]
 
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_constraints"

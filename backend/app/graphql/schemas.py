@@ -568,16 +568,50 @@ class ProfileNutrientConstraint(relay.Node):
         )  # type: ignore
 
 
+@strawberry.enum
+class ProfileConstraintType(Enum):
+    GROSS_ENERGY = "GROSS_ENERGY"
+    DIGESTIBLE_ENERGY = "DIGESTIBLE_ENERGY"
+    METABOLIZABLE_ENERGY = "METABOLIZABLE_ENERGY"
+    NET_ENERGY = "NET_ENERGY"
+
+
+@strawberry.enum
+class ProfileConstraintMode(Enum):
+    LITERAL = "LITERAL"
+
+
 @strawberry.type
 class ProfileConstraint(relay.Node):
     id: relay.NodeID[strawberry.ID]
     profile_id: relay.GlobalID
+    type: ProfileConstraintType
+    mode: ProfileConstraintMode
+    operator: ConstraintOperator
+    literal_unit_id: relay.GlobalID | None
+    literal_value: float | None
+
+    @strawberry.field
+    async def literal_unit(self, info: Info) -> Optional[Unit]:
+        if self.literal_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.literal_unit_id.node_id)
 
     @staticmethod
     def from_model(constraint: models.ProfileConstraint) -> "ProfileConstraint":
         return ProfileConstraint(
             id=strawberry_id(constraint.id),
             profile_id=global_id(Profile, constraint.profile_id),
+            type=ProfileConstraintType(constraint.type),
+            mode=ProfileConstraintMode(constraint.mode),
+            operator=ConstraintOperator(constraint.operator),
+            literal_unit_id=(
+                global_id(Unit, constraint.literal_unit_id)
+                if constraint.literal_unit_id is not None
+                else None
+            ),
+            literal_value=constraint.literal_value,
         )
 
     @classmethod
@@ -782,6 +816,13 @@ class Profile(relay.Node):
             int(self.id),
         )
 
+    @strawberry.field
+    async def constraints(self, info: Info) -> list[ProfileConstraint]:
+        return await resolvers.profiles.resolve_profile_constraints(
+            info,
+            int(self.id),
+        )
+
     @staticmethod
     def from_model(profile: models.Profile) -> "Profile":
         return Profile(
@@ -895,11 +936,21 @@ class UpdateProfileInput:
 @strawberry.input
 class CreateProfileConstraintInput:
     profile_id: relay.GlobalID
+    type: ProfileConstraintType
+    mode: ProfileConstraintMode
+    operator: ConstraintOperator
+    literal_unit_id: relay.GlobalID | None
+    literal_value: float | None
 
 
 @strawberry.input
 class UpdateProfileConstraintInput:
     id: relay.GlobalID
+    type: ProfileConstraintType | None = strawberry.UNSET
+    mode: ProfileConstraintMode | None = strawberry.UNSET
+    operator: ConstraintOperator | None = strawberry.UNSET
+    literal_unit_id: relay.GlobalID | None = strawberry.UNSET
+    literal_value: float | None = strawberry.UNSET
 
 
 @strawberry.input

@@ -344,3 +344,26 @@ async def resolve_profile_ingredient_costs(
         )
 
         return [schemas.ProfileIngredientCost.from_model(c) for c in costs]
+
+
+async def resolve_profile_constraints(
+    info: "context.Info", profile_id: int
+) -> list["schemas.ProfileConstraint"]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        constraints = await db.scalars(
+            select(models.ProfileConstraint)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.Profile.id == profile_id,
+                models.ProfileConstraint.archived == False,
+            )
+        )
+
+        return [schemas.ProfileConstraint.from_model(c) for c in constraints]

@@ -12,6 +12,8 @@ import {
   NutrientConstraintMode,
   NutrientConstraintType,
   Unit,
+  ProfileConstraintType,
+  ProfileConstraintMode,
 } from "../gql/graphql";
 
 export const profileIngredientConstraintSchema = z
@@ -213,6 +215,15 @@ export const profileIngredientCostSchema = z
       }
     }
   });
+
+export const profileConstraintSchema = z.object({
+  id: z.string(),
+  type: z.nativeEnum(ProfileConstraintType),
+  mode: z.nativeEnum(ProfileConstraintMode),
+  operator: z.nativeEnum(ConstraintOperator),
+  literalUnit: nodeId<Unit>().optional(),
+  literalValue: z.coerce.number().optional(),
+});
 
 export const profileSchema = z.object({
   id: z.string(),
