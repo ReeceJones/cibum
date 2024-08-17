@@ -318,6 +318,10 @@ class ProfileIngredientCost(Base):
     literal_cost: Mapped[float | None]
     literal_cost_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
 
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="profile_ingredient_costs"
+    )
+
 
 class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -351,5 +355,9 @@ class Profile(Base):
     )
     profile_nutrient_values: Mapped[list[ProfileNutrientValue]] = relationship(
         "ProfileNutrientValue",
+        back_populates="profile",
+    )
+    profile_ingredient_costs: Mapped[list[ProfileIngredientCost]] = relationship(
+        "ProfileIngredientCost",
         back_populates="profile",
     )

@@ -8,19 +8,15 @@ import { NutrientValues } from "./nutrient-values";
 export function ProfileCards() {
   return (
     <>
-      <div className="col-span-3">
+      <div className="col-span-3 flex flex-col space-y-8">
         <IngredientRules />
+        <NutrientRules />
+        <IngredientNutrientValues />
       </div>
-      <div className="col-span-2 row-span-3 flex-row space-y-8">
+      <div className="col-span-2 flex flex-col space-y-8">
         <Constraints />
         <IngredientCosts />
         <NutrientValues />
-      </div>
-      <div className="col-span-3">
-        <NutrientRules />
-      </div>
-      <div className="col-span-3">
-        <IngredientNutrientValues />
       </div>
     </>
   );

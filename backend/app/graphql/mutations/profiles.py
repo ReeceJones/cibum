@@ -1182,3 +1182,143 @@ async def delete_profile_nutrient_value(
         await db.commit()
 
         return schemas.DeletedNode(success=True)
+
+
+async def create_profile_ingredient_cost(
+    info: context.Info, input: "schemas.CreateProfileIngredientCostInput"
+) -> "schemas.ProfileIngredientCost":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        profile = await db.get(models.Profile, int(input.profile_id.node_id))
+
+        if profile is None or (
+            profile.organization_id is None
+            or profile.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Profile not found")
+
+        ingredient = await db.get(models.Ingredient, int(input.ingredient_id.node_id))
+
+        if ingredient is None or (
+            ingredient.organization_id is not None
+            and ingredient.organization_id != info.context.user.org_id
+        ):
+            raise Exception("Ingredient not found")
+
+        profile_ingredient_cost = models.ProfileIngredientCost(
+            profile_id=int(input.profile_id.node_id),
+            ingredient_id=int(input.ingredient_id.node_id),
+            mode=input.mode.value,
+            literal_cost=(
+                input.literal_cost if utils.is_value(input.literal_cost) else None
+            ),
+            literal_cost_unit_id=(
+                input.literal_cost_unit_id.node_id
+                if utils.is_value(input.literal_cost_unit_id)
+                else None
+            ),
+        )
+        db.add(profile_ingredient_cost)
+        await db.commit()
+
+        return schemas.ProfileIngredientCost.from_model(profile_ingredient_cost)
+
+
+async def update_profile_ingredient_cost(
+    info: context.Info, input: "schemas.UpdateProfileIngredientCostInput"
+) -> "schemas.ProfileIngredientCost":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        profile_ingredient_cost = await db.get(
+            models.ProfileIngredientCost,
+            int(input.id.node_id),
+            options=[
+                selectinload(models.ProfileIngredientCost.profile),
+            ],
+        )
+
+        if profile_ingredient_cost is None:
+            raise Exception("Profile ingredient cost not found")
+
+        if (
+            profile_ingredient_cost.profile.organization_id is not None
+            and profile_ingredient_cost.profile.organization_id
+            != info.context.user.org_id
+        ):
+            raise Exception("Profile ingredient cost not found")
+
+        if utils.is_set(input.ingredient_id):
+            if input.ingredient_id is None:
+                raise Exception("ingredient_id is required for ProfileIngredientCost")
+
+            ingredient = await db.get(
+                models.Ingredient, int(input.ingredient_id.node_id)
+            )
+
+            if ingredient is None:
+                raise Exception("Ingredient not found")
+
+            if (
+                ingredient.organization_id is not None
+                and ingredient.organization_id != info.context.user.org_id
+            ):
+                raise Exception("Ingredient not found")
+
+            profile_ingredient_cost.ingredient_id = int(input.ingredient_id.node_id)
+
+        if utils.is_set(input.mode):
+            if input.mode is None:
+                raise Exception("mode is required for ProfileIngredientCost")
+
+            profile_ingredient_cost.mode = input.mode.value
+
+        if utils.is_set(input.literal_cost):
+            profile_ingredient_cost.literal_cost = input.literal_cost
+
+        if utils.is_set(input.literal_cost_unit_id):
+            profile_ingredient_cost.literal_cost_unit_id = (
+                input.literal_cost_unit_id.node_id
+                if input.literal_cost_unit_id is not None
+                else None
+            )
+
+        await db.commit()
+
+        return schemas.ProfileIngredientCost.from_model(profile_ingredient_cost)
+
+
+async def delete_profile_ingredient_cost(
+    info: context.Info, input: "schemas.DeleteNodeInput"
+) -> "schemas.DeletedNode":
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        for id in input.ids:
+            profile_ingredient_cost = await db.get(
+                models.ProfileIngredientCost,
+                int(id.node_id),
+                options=[
+                    selectinload(models.ProfileIngredientCost.profile),
+                ],
+            )
+
+            if profile_ingredient_cost is None:
+                raise Exception("Profile ingredient cost not found")
+
+            if (
+                profile_ingredient_cost.profile.organization_id is not None
+                and profile_ingredient_cost.profile.organization_id
+                != info.context.user.org_id
+            ):
+                raise Exception("Profile ingredient cost not found")
+
+            profile_ingredient_cost.archived = True
+
+        await db.commit()
+
+        return schemas.DeletedNode(success=True)

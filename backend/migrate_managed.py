@@ -30,7 +30,7 @@ class ManagedIngredientNode(BaseModel):
 class ManagedUnitNode(BaseModel):
     id: str
     name: str
-    type: Literal["CONCENTRATION"] | Literal["ENERGY"]
+    type: Literal["CONCENTRATION"] | Literal["ENERGY"] | Literal["COST"]
     symbol: str
     base_unit_multiplier: float
     base_unit_offset: float

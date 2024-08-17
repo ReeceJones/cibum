@@ -1,11 +1,10 @@
 from typing import Iterable, Optional
 
-from sqlalchemy import or_, select
-
 from app import models
 from app.db import DB
 from app.graphql import context, schemas, utils
 from app.graphql.access import AuthError
+from sqlalchemy import or_, select
 
 
 async def get_profiles(info: "context.Info") -> list["schemas.Profile"]:
@@ -292,3 +291,56 @@ async def resolve_profile_nutrient_values(
         )
 
         return [schemas.ProfileNutrientValue.from_model(v) for v in values]
+
+
+async def resolve_profile_ingredient_cost_nodes(
+    info: "context.Info", cost_ids: Iterable[str], required: bool = False
+) -> list[Optional["schemas.ProfileIngredientCost"]]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    nodes = [int(x) for x in cost_ids]
+    async with DB.async_session() as db:
+        costs = await db.scalars(
+            select(models.ProfileIngredientCost)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.ProfileIngredientCost.id.in_(nodes),
+                models.ProfileIngredientCost.archived == False,
+            )
+        )
+
+        return utils.make_relay_result(
+            nodes,
+            costs,
+            required,
+            lambda x: x.id,
+            schemas.ProfileIngredientCost.from_model,
+        )
+
+
+async def resolve_profile_ingredient_costs(
+    info: "context.Info", profile_id: int
+) -> list["schemas.ProfileIngredientCost"]:
+    if not context.has_org(info.context.user):
+        raise AuthError
+
+    async with DB.async_session() as db:
+        costs = await db.scalars(
+            select(models.ProfileIngredientCost)
+            .join(models.Profile)
+            .where(
+                or_(
+                    models.Profile.organization_id == None,
+                    models.Profile.organization_id == info.context.user.org_id,
+                ),
+                models.Profile.id == profile_id,
+                models.ProfileIngredientCost.archived == False,
+            )
+        )
+
+        return [schemas.ProfileIngredientCost.from_model(c) for c in costs]

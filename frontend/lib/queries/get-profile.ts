@@ -104,6 +104,19 @@ export const getProfileQuery = graphql(`
             symbol
           }
         }
+        ingredientCosts {
+          id
+          mode
+          ingredient {
+            id
+            name
+          }
+          literalCost
+          literalCostUnit {
+            id
+            symbol
+          }
+        }
       }
     }
   }

@@ -6,6 +6,7 @@ import {
   IngredientCategory,
   IngredientConstraintMode,
   IngredientConstraintType,
+  IngredientCostMode,
   Nutrient,
   NutrientCategory,
   NutrientConstraintMode,
@@ -183,6 +184,33 @@ export const profileNutrientValueSchema = z
         code: z.ZodIssueCode.custom,
         path: ["netEnergyUnit"],
       });
+    }
+  });
+
+export const profileIngredientCostSchema = z
+  .object({
+    id: z.string(),
+    ingredient: nodeId<Ingredient>(),
+    mode: z.nativeEnum(IngredientCostMode),
+    literalCost: z.coerce.number().optional(),
+    literalCostUnit: nodeId<Unit>().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode === IngredientCostMode.Literal) {
+      if (data.literalCost === undefined) {
+        ctx.addIssue({
+          message: "Required",
+          code: z.ZodIssueCode.custom,
+          path: ["literalCost"],
+        });
+      }
+      if (data.literalCostUnit === undefined) {
+        ctx.addIssue({
+          message: "Required",
+          code: z.ZodIssueCode.custom,
+          path: ["literalCostUnit"],
+        });
+      }
     }
   });
 

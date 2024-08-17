@@ -281,6 +281,7 @@ class NutrientConstraintMode(Enum):
 class UnitType(Enum):
     CONCENTRATION = "CONCENTRATION"
     ENERGY = "ENERGY"
+    COST = "COST"
 
 
 @strawberry.type
@@ -681,6 +682,59 @@ class ProfileNutrientValue(relay.Node):
         )  # type: ignore
 
 
+@strawberry.enum
+class IngredientCostMode(Enum):
+    LITERAL = "LITERAL"
+
+
+@strawberry.type
+class ProfileIngredientCost(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    profile_id: relay.GlobalID
+    ingredient_id: relay.GlobalID
+    mode: IngredientCostMode
+    literal_cost: float | None
+    literal_cost_unit_id: relay.GlobalID | None
+
+    @strawberry.field
+    async def ingredient(self, info: Info) -> Ingredient:
+        return await info.context.loaders.ingredient.load(
+            int(self.ingredient_id.node_id)
+        )
+
+    @strawberry.field
+    async def literal_cost_unit(self, info: Info) -> Optional[Unit]:
+        if self.literal_cost_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.literal_cost_unit_id.node_id)
+
+    @staticmethod
+    def from_model(
+        value: models.ProfileIngredientCost,
+    ) -> "ProfileIngredientCost":
+        return ProfileIngredientCost(
+            id=strawberry_id(value.id),
+            profile_id=global_id(Profile, value.profile_id),
+            ingredient_id=global_id(Ingredient, value.ingredient_id),
+            mode=IngredientCostMode(value.mode),
+            literal_cost=value.literal_cost,
+            literal_cost_unit_id=(
+                global_id(Unit, value.literal_cost_unit_id)
+                if value.literal_cost_unit_id is not None
+                else None
+            ),
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["ProfileIngredientCost"]:
+        return await resolvers.profiles.resolve_profile_ingredient_cost_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
 @strawberry.type
 class Profile(relay.Node):
     id: relay.NodeID[strawberry.ID]
@@ -717,6 +771,13 @@ class Profile(relay.Node):
     @strawberry.field
     async def nutrient_values(self, info: Info) -> list[ProfileNutrientValue]:
         return await resolvers.profiles.resolve_profile_nutrient_values(
+            info,
+            int(self.id),
+        )
+
+    @strawberry.field
+    async def ingredient_costs(self, info: Info) -> list[ProfileIngredientCost]:
+        return await resolvers.profiles.resolve_profile_ingredient_costs(
             info,
             int(self.id),
         )
@@ -943,6 +1004,24 @@ class UpdateProfileNutrientValueInput:
     net_energy_unit_id: relay.GlobalID | None = strawberry.UNSET
 
 
+@strawberry.input
+class CreateProfileIngredientCostInput:
+    profile_id: relay.GlobalID
+    ingredient_id: relay.GlobalID
+    mode: IngredientCostMode
+    literal_cost: float | None = strawberry.UNSET
+    literal_cost_unit_id: relay.GlobalID | None = strawberry.UNSET
+
+
+@strawberry.input
+class UpdateProfileIngredientCostInput:
+    id: relay.GlobalID
+    ingredient_id: relay.GlobalID | None = strawberry.UNSET
+    mode: IngredientCostMode | None = strawberry.UNSET
+    literal_cost: float | None = strawberry.UNSET
+    literal_cost_unit_id: relay.GlobalID | None = strawberry.UNSET
+
+
 @strawberry.type
 class Query:
     node: relay.Node = relay.node()
@@ -1069,6 +1148,10 @@ class Mutation:
         resolver=mutations.profiles.create_profile_nutrient_value,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
+    create_profile_ingredient_cost: ProfileIngredientCost = strawberry.field(
+        resolver=mutations.profiles.create_profile_ingredient_cost,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
     update_profile: Profile = strawberry.field(
         resolver=mutations.profiles.update_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -1097,6 +1180,10 @@ class Mutation:
         resolver=mutations.profiles.update_profile_nutrient_value,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
+    update_profile_ingredient_cost: ProfileIngredientCost = strawberry.field(
+        resolver=mutations.profiles.update_profile_ingredient_cost,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
     delete_profile: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile,
         permission_classes=[IsAuthenticatedWithOrganization],
@@ -1119,6 +1206,10 @@ class Mutation:
     )
     delete_profile_nutrient_value: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile_nutrient_value,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    delete_profile_ingredient_cost: DeletedNode = strawberry.field(
+        resolver=mutations.profiles.delete_profile_ingredient_cost,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 

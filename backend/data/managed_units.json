@@ -54,5 +54,13 @@
     "base_unit_multiplier": 238.85,
     "base_unit_offset": 0,
     "type": "ENERGY"
+  },
+  {
+    "id": "$-kg",
+    "name": "dollar per kilogram",
+    "symbol": "$/kg",
+    "base_unit_multiplier": 1,
+    "base_unit_offset": 0,
+    "type": "COST"
   }
 ]
