@@ -13,6 +13,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
+    "\n  mutation CreateDiet($input: CreateDietInput!) {\n    createDiet(input: $input) {\n      id\n    }\n  }\n": types.CreateDietDocument,
     "\nmutation CreateIngredientCategory($input: CreateIngredientCategoryInput!) {\n  createIngredientCategory(input: $input) {\n    id\n  }\n}\n": types.CreateIngredientCategoryDocument,
     "\nmutation CreateIngredient($input: CreateIngredientInput!) {\n  createIngredient(input: $input) {\n    id\n  }\n}\n": types.CreateIngredientDocument,
     "\nmutation CreateNutrientCategory($input: CreateNutrientCategoryInput!) {\n  createNutrientCategory(input: $input) {\n    id\n  }\n}\n": types.CreateNutrientCategoryDocument,
@@ -24,6 +25,7 @@ const documents = {
     "\nmutation CreateProfileNutrientConstraint($input: CreateProfileNutrientConstraintInput!) {\n  createProfileNutrientConstraint(input: $input) {\n    id\n  }\n}\n": types.CreateProfileNutrientConstraintDocument,
     "\nmutation CreateProfileNutrientValue($input: CreateProfileNutrientValueInput!) {\n  createProfileNutrientValue(input: $input) {\n    id\n  }\n}  \n": types.CreateProfileNutrientValueDocument,
     "\nmutation CreateProfile($input: CreateProfileInput!) {\n  createProfile(input: $input) {\n    id\n  }\n}\n": types.CreateProfileDocument,
+    "\n  mutation DeleteDiet($input: DeleteNodeInput!) {\n    deleteDiet(input: $input) {\n      success\n    }\n  }\n": types.DeleteDietDocument,
     "\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n": types.DeleteIngredientCategoryDocument,
     "\nmutation DeleteIngredient($input: DeleteNodeInput!) {\n  deleteIngredient(input: $input) {\n    success\n  }\n}\n": types.DeleteIngredientDocument,
     "\nmutation DeleteNutrientCategory($input: DeleteNodeInput!) {\n  deleteNutrientCategory(input: $input) {\n    success\n  }\n}\n": types.DeleteNutrientCategoryDocument,
@@ -35,6 +37,7 @@ const documents = {
     "\nmutation DeleteProfileNutrientConstraint($input: DeleteNodeInput!) {\n  deleteProfileNutrientConstraint(input: $input) {\n    success\n  }\n}\n": types.DeleteProfileNutrientConstraintDocument,
     "\nmutation DeleteProfileNutrientValueMutation($input: DeleteNodeInput!) {\n  deleteProfileNutrientValue(input: $input) {\n    success\n  }\n}\n": types.DeleteProfileNutrientValueMutationDocument,
     "\nmutation DeleteProfile($input: DeleteNodeInput!) {\n  deleteProfile(input: $input) {\n    success\n  }\n}\n": types.DeleteProfileDocument,
+    "\n  mutation UpdateDiet($input: UpdateDietInput!) {\n    updateDiet(input: $input) {\n      id\n    }\n  }\n": types.UpdateDietDocument,
     "\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n": types.UpdateIngredientCategoryDocument,
     "\nmutation UpdateIngredient($input: UpdateIngredientInput!) {\n  updateIngredient(input: $input) {\n    id\n  }\n}\n": types.UpdateIngredientDocument,
     "\nmutation UpdateNutrientCategory($input: UpdateNutrientCategoryInput!) {\n  updateNutrientCategory(input: $input) {\n    id\n  }\n}\n": types.UpdateNutrientCategoryDocument,
@@ -46,6 +49,7 @@ const documents = {
     "\nmutation UpdateProfileNutrientConstraint($input: UpdateProfileNutrientConstraintInput!) {\n  updateProfileNutrientConstraint(input: $input) {\n    id\n  }\n}\n": types.UpdateProfileNutrientConstraintDocument,
     "\nmutation UpdateProfileNutrientValue($input: UpdateProfileNutrientValueInput!) {\n  updateProfileNutrientValue(input: $input) {\n    id\n  }\n}  \n": types.UpdateProfileNutrientValueDocument,
     "\nmutation UpdateProfile($input: UpdateProfileInput!) {\n  updateProfile(input: $input) {\n    id\n    name\n    description\n  }\n}\n": types.UpdateProfileDocument,
+    "\n  query GetAllDiets {\n    diets {\n      edges {\n        node {\n          id\n          name\n          description\n        }\n      }\n    }\n  }\n": types.GetAllDietsDocument,
     "\nquery GetAllIngredientsAndCategories {\n  ingredients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        ingredientCategoryId\n      }\n    }\n  }\n  ingredientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentIngredientCategoryId\n        managed\n      }\n    }\n  }\n}\n": types.GetAllIngredientsAndCategoriesDocument,
     "\nquery GetAllNutrientsAndCategories {\n  nutrients {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n        nutrientCategoryId\n      }\n    }\n  }\n  nutrientCategories {\n    edges {\n      node {\n        id\n        name\n        description\n        parentNutrientCategoryId\n        managed\n      }\n    }\n  }\n}\n": types.GetAllNutrientsAndCategoriesDocument,
     "\nquery GetAllProfiles {\n  profiles {\n    edges {\n      node {\n        id\n        name\n        description\n        managed\n      }\n    }\n  }\n}\n": types.GetAllProfilesDocument,
@@ -67,6 +71,10 @@ const documents = {
  */
 export function graphql(source: string): unknown;
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateDiet($input: CreateDietInput!) {\n    createDiet(input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation CreateDiet($input: CreateDietInput!) {\n    createDiet(input: $input) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -114,6 +122,10 @@ export function graphql(source: "\nmutation CreateProfile($input: CreateProfileI
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation DeleteDiet($input: DeleteNodeInput!) {\n    deleteDiet(input: $input) {\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteDiet($input: DeleteNodeInput!) {\n    deleteDiet(input: $input) {\n      success\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n"): (typeof documents)["\nmutation DeleteIngredientCategory($input: DeleteNodeInput!) {\n  deleteIngredientCategory(input: $input) {\n    success\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -158,6 +170,10 @@ export function graphql(source: "\nmutation DeleteProfile($input: DeleteNodeInpu
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation UpdateDiet($input: UpdateDietInput!) {\n    updateDiet(input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateDiet($input: UpdateDietInput!) {\n    updateDiet(input: $input) {\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n"): (typeof documents)["\nmutation UpdateIngredientCategory($input: UpdateIngredientCategoryInput!) {\n  updateIngredientCategory(input: $input) {\n    id\n  }\n}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -199,6 +215,10 @@ export function graphql(source: "\nmutation UpdateProfileNutrientValue($input: U
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\nmutation UpdateProfile($input: UpdateProfileInput!) {\n  updateProfile(input: $input) {\n    id\n    name\n    description\n  }\n}\n"): (typeof documents)["\nmutation UpdateProfile($input: UpdateProfileInput!) {\n  updateProfile(input: $input) {\n    id\n    name\n    description\n  }\n}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetAllDiets {\n    diets {\n      edges {\n        node {\n          id\n          name\n          description\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetAllDiets {\n    diets {\n      edges {\n        node {\n          id\n          name\n          description\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

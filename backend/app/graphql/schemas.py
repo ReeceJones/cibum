@@ -840,6 +840,125 @@ class Profile(relay.Node):
         return await resolvers.profiles.resolve_profile_nodes(info, node_ids, required)  # type: ignore
 
 
+@strawberry.type
+class DietProfileConfiguration(relay.Node): ...
+
+
+@strawberry.type
+class DietConfigurationVersion(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    diet_id: relay.GlobalID
+    version: int
+
+    @staticmethod
+    def from_model(
+        version: models.DietConfigurationVersion,
+    ) -> "DietConfigurationVersion":
+        return DietConfigurationVersion(
+            id=DietConfigurationVersion.make_node_id(version),
+            diet_id=global_id(Diet, version.diet_id),
+            version=version.version,
+        )
+
+    @staticmethod
+    def make_node_id(
+        version: models.DietConfigurationVersion,
+    ) -> relay.NodeID[strawberry.ID]:
+        return strawberry_id(f"{version.diet_id}:{version.version}")
+
+    @staticmethod
+    def parse_node_id(
+        node_id: str,
+    ) -> tuple[int, int]:
+        components = tuple(map(int, node_id.split(":")))
+        return components[0], components[1]
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["DietConfigurationVersion"]:
+        return await resolvers.diets.resolve_diet_configuration_version_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
+@strawberry.type
+class DietOutputVersion(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    diet_id: relay.GlobalID
+    version: int
+
+    @staticmethod
+    def from_model(
+        version: models.DietOutputVersion,
+    ) -> "DietOutputVersion":
+        return DietOutputVersion(
+            id=DietOutputVersion.make_node_id(version),
+            diet_id=global_id(Diet, version.diet_id),
+            version=version.version,
+        )
+
+    @staticmethod
+    def make_node_id(
+        version: models.DietOutputVersion,
+    ) -> relay.NodeID[strawberry.ID]:
+        return strawberry_id(f"{version.diet_id}:{version.version}")
+
+    @staticmethod
+    def parse_node_id(
+        node_id: str,
+    ) -> tuple[int, int]:
+        components = tuple(map(int, node_id.split(":")))
+        return components[0], components[1]
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["DietOutputVersion"]:
+        return await resolvers.diets.resolve_diet_output_version_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
+@strawberry.type
+class Diet(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    organization_id: str
+    name: str
+    description: str | None
+
+    @strawberry.field
+    async def latest_configuration_version(
+        self, info: Info
+    ) -> Optional[DietConfigurationVersion]:
+        return await resolvers.diets.resolve_latest_diet_configuration_version(
+            info,
+            int(self.id),
+        )
+
+    @strawberry.field
+    async def latest_output_version(self, info: Info) -> Optional[DietOutputVersion]:
+        return await resolvers.diets.resolve_latest_diet_output_version(
+            info,
+            int(self.id),
+        )
+
+    @staticmethod
+    def from_model(diet: models.Diet) -> "Diet":
+        return Diet(
+            id=strawberry_id(diet.id),
+            organization_id=diet.organization_id,
+            name=diet.name,
+            description=diet.description,
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["Diet"]:
+        return await resolvers.diets.resolve_diet_nodes(info, node_ids, required)  # type: ignore
+
+
 @strawberry.input
 class DeleteNodeInput:
     ids: list[relay.GlobalID]
@@ -1073,6 +1192,19 @@ class UpdateProfileIngredientCostInput:
     literal_cost_unit_id: relay.GlobalID | None = strawberry.UNSET
 
 
+@strawberry.input
+class CreateDietInput:
+    name: str
+    description: str | None
+
+
+@strawberry.input
+class UpdateDietInput:
+    id: relay.GlobalID
+    name: str | None = strawberry.UNSET
+    description: str | None = strawberry.UNSET
+
+
 @strawberry.type
 class Query:
     node: relay.Node = relay.node()
@@ -1112,6 +1244,13 @@ class Query:
     units: list[Unit] = relay.connection(
         relay.ListConnection[Unit],
         resolver=resolvers.units.get_units,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+
+    # diets
+    diets: list[Diet] = relay.connection(
+        relay.ListConnection[Diet],
+        resolver=resolvers.diets.get_diets,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 
@@ -1261,6 +1400,20 @@ class Mutation:
     )
     delete_profile_ingredient_cost: DeletedNode = strawberry.field(
         resolver=mutations.profiles.delete_profile_ingredient_cost,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+
+    # diets
+    create_diet: Diet = strawberry.field(
+        resolver=mutations.diets.create_diet,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    update_diet: Diet = strawberry.field(
+        resolver=mutations.diets.update_diet,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    delete_diet: DeletedNode = strawberry.field(
+        resolver=mutations.diets.delete_diet,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 

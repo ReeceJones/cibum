@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -14,46 +13,40 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { Profile } from "@/lib/gql/graphql";
+import { Diet } from "@/lib/gql/graphql";
 import { useGraphQLMutation, useGraphQLQuery } from "@/lib/graphql";
-import { deleteProfileMutation } from "@/lib/mutations/delete-profile";
-import {
-  getAllProfilesKey,
-  getAllProfilesQuery,
-} from "@/lib/queries/get-all-profiles";
-import { profileSchema } from "@/lib/schemas/profiles";
+import { deleteDietMutation } from "@/lib/mutations/delete-diet";
+import { getAllDietsKey, getAllDietsQuery } from "@/lib/queries/get-all-diets";
 import { useAuth } from "@clerk/nextjs";
 import {
-  IconCheck,
   IconDeviceFloppy,
   IconDotsVertical,
   IconTrash,
-  IconX,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
-import { EditProfileDialog } from "./edit-profile-dialog";
+import { EditDietDialog } from "./edit-diet-dialog";
 import Link from "next/link";
-import { profileRoute } from "@/lib/routes/profiles";
+import { dietRoute } from "@/lib/routes/diets";
 
-function ProfileDeleteButton({ profile }: { profile: Profile }) {
+function DietDeleteButton({ diet }: { diet: Diet }) {
   const { orgId } = useAuth();
   const queryClient = useQueryClient();
-  const deleteProfile = useGraphQLMutation(deleteProfileMutation);
+  const deleteDiet = useGraphQLMutation(deleteDietMutation);
   const mutation = useMutation({
-    ...deleteProfile,
+    ...deleteDiet,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getAllProfilesKey({ orgId: orgId ?? "" }),
+        queryKey: getAllDietsKey({ orgId: orgId ?? "" }),
       });
-      toast("Successfully deleted profile", {
+      toast("Successfully deleted diet", {
         icon: <IconDeviceFloppy size={18} />,
       });
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to delete profile", {
+      toast("Failed to delete diet", {
         icon: <IconDeviceFloppy size={18} />,
         description: error.message,
       });
@@ -63,13 +56,9 @@ function ProfileDeleteButton({ profile }: { profile: Profile }) {
   async function onDelete() {
     await mutation.mutateAsync({
       input: {
-        ids: [profile.id],
+        ids: [diet.id],
       },
     });
-  }
-
-  if (profile.managed) {
-    return null;
   }
 
   return (
@@ -84,7 +73,7 @@ function ProfileDeleteButton({ profile }: { profile: Profile }) {
   );
 }
 
-function ProfileDropdown({ profile }: { profile: Profile }) {
+function DietDropdown({ diet }: { diet: Diet }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -94,20 +83,20 @@ function ProfileDropdown({ profile }: { profile: Profile }) {
       </PopoverTrigger>
       <PopoverContent align="end">
         <div className="space-y-2">
-          <EditProfileDialog profile={profile} />
-          <ProfileDeleteButton profile={profile} />
+          <EditDietDialog diet={diet} />
+          <DietDeleteButton diet={diet} />
         </div>
       </PopoverContent>
     </Popover>
   );
 }
 
-export function ProfileTable() {
+export function DietTable() {
   const { orgId, orgSlug, isLoaded } = useAuth();
-  const { queryFn } = useGraphQLQuery(getAllProfilesQuery);
+  const { queryFn } = useGraphQLQuery(getAllDietsQuery);
   const { data, status } = useQuery({
     queryFn,
-    queryKey: getAllProfilesKey({ orgId: orgId ?? "" }),
+    queryKey: getAllDietsKey({ orgId: orgId ?? "" }),
     enabled: isLoaded,
   });
 
@@ -130,44 +119,34 @@ export function ProfileTable() {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Custom</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.profiles.edges.length === 0 && (
+          {data.diets.edges.length === 0 && (
             <TableRow>
               <TableCell colSpan={4}>
-                <p className="text-center italic">No profiles found</p>
+                <p className="text-center italic">No diets found</p>
               </TableCell>
             </TableRow>
           )}
-          {data.profiles.edges.map((profile) => (
-            <TableRow key={profile.node.id}>
+          {data.diets.edges.map((diet) => (
+            <TableRow key={diet.node.id}>
               <TableCell>
                 <Link
-                  href={profileRoute({
+                  href={dietRoute({
                     organizationSlug: orgSlug ?? "",
-                    profileId: profile.node.id,
+                    dietId: diet.node.id,
                   })}
                 >
-                  <Button variant="link">{profile.node.name}</Button>
+                  <Button variant="link">{diet.node.name}</Button>
                 </Link>
               </TableCell>
               <TableCell>
-                <span>{profile.node.description}</span>
+                <span>{diet.node.description}</span>
               </TableCell>
               <TableCell>
-                <div>
-                  {!profile.node.managed ? (
-                    <IconCheck size={20} />
-                  ) : (
-                    <IconX size={20} />
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <ProfileDropdown profile={profile.node as Profile} />
+                <DietDropdown diet={diet.node as Diet} />
               </TableCell>
             </TableRow>
           ))}

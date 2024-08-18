@@ -1,4 +1,4 @@
-from . import (ingredient_categories, ingredients, nutrient_categories,
+from . import (diets, ingredient_categories, ingredients, nutrient_categories,
                nutrients, profiles)
 
 __all__ = [
@@ -7,4 +7,5 @@ __all__ = [
     "ingredient_categories",
     "ingredients",
     "profiles",
+    "diets",
 ]

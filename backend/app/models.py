@@ -366,3 +366,52 @@ class Profile(Base):
         "ProfileIngredientCost",
         back_populates="profile",
     )
+
+
+class DietProfileConfiguration(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    configuration_version: Mapped[int] = mapped_column(primary_key=True)
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"), primary_key=True)
+    order: Mapped[int] = mapped_column(index=True)
+
+
+class DietConfigurationVersion(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+
+
+class DietOutputVersion(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+
+
+class DietIngredientOutput(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    ingredient_id: Mapped[int] = mapped_column(
+        ForeignKey("ingredient.id"), primary_key=True
+    )
+    version: Mapped[int] = mapped_column(primary_key=True)
+    amount: Mapped[float]
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+
+
+# class DietSummaryOutput(Base):
+#     diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+#     version: Mapped[int] = mapped_column(primary_key=True)
+#     name: Mapped[str] = mapped_column(index=True)
+#     description: Mapped[str | None]
+#     gross_energy: Mapped[float | None]
+#     gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+#     digestible_energy: Mapped[float | None]
+#     digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+#     metabolizable_energy: Mapped[float | None]
+#     metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+#     net_energy: Mapped[float | None]
+#     net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+
+
+class Diet(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organization.id"))
+    name: Mapped[str] = mapped_column(index=True)
+    description: Mapped[str | None]

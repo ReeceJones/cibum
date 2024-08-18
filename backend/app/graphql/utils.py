@@ -43,6 +43,14 @@ def make_relay_result(
     key: Callable[[K], T],
     conv: Callable[[K], Q],
 ) -> list[Optional[Q]]:
+    """
+    Convert a list of models to a list of relay compatible results
+    @param nodes: List of node IDs
+    @param models: List of models
+    @param required: Whether all nodes must be found
+    @param key: Function to get the node id of a model
+    @param conv: Function to convert a model to a schema object
+    """
 
     results: list[Optional[Q]] = []
     models_dict: dict[T, K] = {key(x): x for x in models}
