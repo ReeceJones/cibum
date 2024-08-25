@@ -841,14 +841,17 @@ class Profile(relay.Node):
 
 
 @strawberry.type
-class DietProfileConfiguration(relay.Node): ...
-
-
-@strawberry.type
 class DietConfigurationVersion(relay.Node):
     id: relay.NodeID[strawberry.ID]
     diet_id: relay.GlobalID
     version: int
+
+    @strawberry.field
+    async def profiles(self, info: Info) -> list[Profile]:
+        return await resolvers.diets.resolve_diet_configuration_version_profiles(
+            info,
+            self.id,
+        )
 
     @staticmethod
     def from_model(
@@ -882,11 +885,420 @@ class DietConfigurationVersion(relay.Node):
         )  # type: ignore
 
 
+@strawberry.enum
+class DietOutputStatus(Enum):
+    UNKNOWN = "UNKNOWN"
+    MODEL_INVALID = "MODEL_INVALID"
+    INFEASIBLE = "INFEASIBLE"
+    OPTIMAL = "OPTIMAL"
+    FEASIBLE = "FEASIBLE"
+
+
+@strawberry.type
+class DietIngredientNutrientOutput(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    diet_id: relay.GlobalID
+    version: int
+    ingredient_id: relay.GlobalID
+    nutrient_id: relay.GlobalID
+    amount: float
+    amount_unit_id: relay.GlobalID
+    gross_energy: float | None
+    gross_energy_unit_id: relay.GlobalID | None
+    digestible_energy: float | None
+    digestible_energy_unit_id: relay.GlobalID | None
+    metabolizable_energy: float | None
+    metabolizable_energy_unit_id: relay.GlobalID | None
+    net_energy: float | None
+    net_energy_unit_id: relay.GlobalID | None
+
+    @strawberry.field
+    async def ingredient(self, info: Info) -> Ingredient:
+        return await info.context.loaders.ingredient.load(
+            int(self.ingredient_id.node_id)
+        )
+
+    @strawberry.field
+    async def nutrient(self, info: Info) -> Nutrient:
+        return await info.context.loaders.nutrient.load(int(self.nutrient_id.node_id))
+
+    @strawberry.field
+    async def amount_unit(self, info: Info) -> Unit:
+        return await info.context.loaders.unit.load(self.amount_unit_id.node_id)
+
+    @strawberry.field
+    async def gross_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.gross_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.gross_energy_unit_id.node_id)
+
+    @strawberry.field
+    async def digestible_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.digestible_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.digestible_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def metabolizable_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.metabolizable_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.metabolizable_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def net_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.net_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.net_energy_unit_id.node_id)
+
+    @staticmethod
+    def make_node_id(
+        output: models.DietIngredientNutrientOutput,
+    ) -> relay.NodeID[strawberry.ID]:
+        return strawberry_id(
+            f"{output.diet_id}:{output.version}:{output.ingredient_id}:{output.nutrient_id}"
+        )
+
+    @staticmethod
+    def parse_node_id(
+        node_id: str,
+    ) -> tuple[int, int, int, int]:
+        components = tuple(map(int, node_id.split(":")))
+        return components[0], components[1], components[2], components[3]
+
+    @staticmethod
+    def from_model(
+        output: models.DietIngredientNutrientOutput,
+    ) -> "DietIngredientNutrientOutput":
+        return DietIngredientNutrientOutput(
+            id=DietIngredientNutrientOutput.make_node_id(output),
+            diet_id=global_id(Diet, output.diet_id),
+            version=output.version,
+            ingredient_id=global_id(Ingredient, output.ingredient_id),
+            nutrient_id=global_id(Nutrient, output.nutrient_id),
+            amount=output.amount,
+            amount_unit_id=global_id(Unit, output.amount_unit_id),
+            gross_energy=output.gross_energy,
+            gross_energy_unit_id=(
+                global_id(Unit, output.gross_energy_unit_id)
+                if output.gross_energy_unit_id is not None
+                else None
+            ),
+            digestible_energy=output.digestible_energy,
+            digestible_energy_unit_id=(
+                global_id(Unit, output.digestible_energy_unit_id)
+                if output.digestible_energy_unit_id is not None
+                else None
+            ),
+            metabolizable_energy=output.metabolizable_energy,
+            metabolizable_energy_unit_id=(
+                global_id(Unit, output.metabolizable_energy_unit_id)
+                if output.metabolizable_energy_unit_id is not None
+                else None
+            ),
+            net_energy=output.net_energy,
+            net_energy_unit_id=(
+                global_id(Unit, output.net_energy_unit_id)
+                if output.net_energy_unit_id is not None
+                else None
+            ),
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["DietIngredientNutrientOutput"]:
+        return await resolvers.diets.resolve_diet_ingredient_nutrient_output_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
+@strawberry.type
+class DietIngredientOutput(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    diet_id: relay.GlobalID
+    version: int
+    ingredient_id: relay.GlobalID
+    amount: float
+    amount_unit_id: relay.GlobalID
+    cost: float | None
+    cost_unit_id: relay.GlobalID | None
+    gross_energy: float | None
+    gross_energy_unit_id: relay.GlobalID | None
+    digestible_energy: float | None
+    digestible_energy_unit_id: relay.GlobalID | None
+    metabolizable_energy: float | None
+    metabolizable_energy_unit_id: relay.GlobalID | None
+    net_energy: float | None
+    net_energy_unit_id: relay.GlobalID | None
+
+    @strawberry.field
+    async def ingredient(self, info: Info) -> Ingredient:
+        return await info.context.loaders.ingredient.load(
+            int(self.ingredient_id.node_id)
+        )
+
+    @strawberry.field
+    async def amount_unit(self, info: Info) -> Unit:
+        return await info.context.loaders.unit.load(self.amount_unit_id.node_id)
+
+    @strawberry.field
+    async def cost_unit(self, info: Info) -> Optional[Unit]:
+        if self.cost_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.cost_unit_id.node_id)
+
+    @strawberry.field
+    async def gross_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.gross_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.gross_energy_unit_id.node_id)
+
+    @strawberry.field
+    async def digestible_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.digestible_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.digestible_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def metabolizable_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.metabolizable_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.metabolizable_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def net_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.net_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.net_energy_unit_id.node_id)
+
+    @strawberry.field
+    async def nutrients(self, info: Info) -> list[DietIngredientNutrientOutput]:
+        return await resolvers.diets.resolve_diet_ingredient_output_nutrients(
+            info,
+            self.id,
+        )
+
+    @staticmethod
+    def make_node_id(
+        output: models.DietIngredientOutput,
+    ) -> relay.NodeID[strawberry.ID]:
+        return strawberry_id(
+            f"{output.diet_id}:{output.version}:{output.ingredient_id}"
+        )
+
+    @staticmethod
+    def parse_node_id(
+        node_id: str,
+    ) -> tuple[int, int, int]:
+        components = tuple(map(int, node_id.split(":")))
+        return components[0], components[1], components[2]
+
+    @staticmethod
+    def from_model(
+        output: models.DietIngredientOutput,
+    ) -> "DietIngredientOutput":
+        return DietIngredientOutput(
+            id=DietIngredientOutput.make_node_id(output),
+            diet_id=global_id(Diet, output.diet_id),
+            version=output.version,
+            ingredient_id=global_id(Ingredient, output.ingredient_id),
+            amount=output.amount,
+            amount_unit_id=global_id(Unit, output.amount_unit_id),
+            cost=output.cost,
+            cost_unit_id=(
+                None
+                if output.cost_unit_id is None
+                else global_id(Unit, output.cost_unit_id)
+            ),
+            gross_energy=output.gross_energy,
+            gross_energy_unit_id=(
+                None
+                if output.gross_energy_unit_id is None
+                else global_id(Unit, output.gross_energy_unit_id)
+            ),
+            digestible_energy=output.digestible_energy,
+            digestible_energy_unit_id=(
+                None
+                if output.digestible_energy_unit_id is None
+                else global_id(Unit, output.digestible_energy_unit_id)
+            ),
+            metabolizable_energy=output.metabolizable_energy,
+            metabolizable_energy_unit_id=(
+                None
+                if output.metabolizable_energy_unit_id is None
+                else global_id(Unit, output.metabolizable_energy_unit_id)
+            ),
+            net_energy=output.net_energy,
+            net_energy_unit_id=(
+                None
+                if output.net_energy_unit_id is None
+                else global_id(Unit, output.net_energy_unit_id)
+            ),
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["DietIngredientOutput"]:
+        return await resolvers.diets.resolve_diet_ingredient_output_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
+@strawberry.type
+class DietSummaryOutput(relay.Node):
+    id: relay.NodeID[strawberry.ID]
+    diet_id: relay.GlobalID
+    version: int
+    cost: float | None
+    cost_unit_id: relay.GlobalID | None
+    gross_energy: float | None
+    gross_energy_unit_id: relay.GlobalID | None
+    digestible_energy: float | None
+    digestible_energy_unit_id: relay.GlobalID | None
+    metabolizable_energy: float | None
+    metabolizable_energy_unit_id: relay.GlobalID | None
+    net_energy: float | None
+    net_energy_unit_id: relay.GlobalID | None
+
+    @strawberry.field
+    async def cost_unit(self, info: Info) -> Optional[Unit]:
+        if self.cost_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.cost_unit_id.node_id)
+
+    @strawberry.field
+    async def gross_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.gross_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.gross_energy_unit_id.node_id)
+
+    @strawberry.field
+    async def digestible_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.digestible_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.digestible_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def metabolizable_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.metabolizable_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(
+            self.metabolizable_energy_unit_id.node_id
+        )
+
+    @strawberry.field
+    async def net_energy_unit(self, info: Info) -> Optional[Unit]:
+        if self.net_energy_unit_id is None:
+            return None
+
+        return await info.context.loaders.unit.load(self.net_energy_unit_id.node_id)
+
+    @staticmethod
+    def make_node_id(
+        output: models.DietSummaryOutput,
+    ) -> relay.NodeID[strawberry.ID]:
+        return strawberry_id(f"{output.diet_id}:{output.version}")
+
+    @staticmethod
+    def parse_node_id(
+        node_id: str,
+    ) -> tuple[int, int]:
+        components = tuple(map(int, node_id.split(":")))
+        return components[0], components[1]
+
+    @staticmethod
+    def from_model(
+        output: models.DietSummaryOutput,
+    ) -> "DietSummaryOutput":
+        return DietSummaryOutput(
+            id=DietSummaryOutput.make_node_id(output),
+            diet_id=global_id(Diet, output.diet_id),
+            version=output.version,
+            cost=output.cost,
+            cost_unit_id=(
+                None
+                if output.cost_unit_id is None
+                else global_id(Unit, output.cost_unit_id)
+            ),
+            gross_energy=output.gross_energy,
+            gross_energy_unit_id=(
+                None
+                if output.gross_energy_unit_id is None
+                else global_id(Unit, output.gross_energy_unit_id)
+            ),
+            digestible_energy=output.digestible_energy,
+            digestible_energy_unit_id=(
+                None
+                if output.digestible_energy_unit_id is None
+                else global_id(Unit, output.digestible_energy_unit_id)
+            ),
+            metabolizable_energy=output.metabolizable_energy,
+            metabolizable_energy_unit_id=(
+                None
+                if output.metabolizable_energy_unit_id is None
+                else global_id(Unit, output.metabolizable_energy_unit_id)
+            ),
+            net_energy=output.net_energy,
+            net_energy_unit_id=(
+                None
+                if output.net_energy_unit_id is None
+                else global_id(Unit, output.net_energy_unit_id)
+            ),
+        )
+
+    @classmethod
+    async def resolve_nodes(
+        cls, *, info: Info, node_ids: Iterable[str], required: bool = False
+    ) -> list["DietSummaryOutput"]:
+        return await resolvers.diets.resolve_diet_summary_output_nodes(
+            info, node_ids, required
+        )  # type: ignore
+
+
 @strawberry.type
 class DietOutputVersion(relay.Node):
     id: relay.NodeID[strawberry.ID]
     diet_id: relay.GlobalID
     version: int
+    status: DietOutputStatus
+
+    @strawberry.field
+    async def summary_output(self, info: Info) -> DietSummaryOutput:
+        return await resolvers.diets.resolve_diet_output_version_summary(
+            info,
+            self.id,
+        )
+
+    @strawberry.field
+    async def ingredient_outputs(self, info: Info) -> list[DietIngredientOutput]:
+        return await resolvers.diets.resolve_diet_output_version_ingredients(
+            info,
+            self.id,
+        )
 
     @staticmethod
     def from_model(
@@ -896,6 +1308,7 @@ class DietOutputVersion(relay.Node):
             id=DietOutputVersion.make_node_id(version),
             diet_id=global_id(Diet, version.diet_id),
             version=version.version,
+            status=DietOutputStatus(version.status),
         )
 
     @staticmethod
@@ -1205,6 +1618,17 @@ class UpdateDietInput:
     description: str | None = strawberry.UNSET
 
 
+@strawberry.input
+class UpdateDietProfilesInput:
+    diet_id: relay.GlobalID
+    profile_ids: list[relay.GlobalID]
+
+
+@strawberry.input
+class GenerateDietOutputInput:
+    diet_id: relay.GlobalID
+
+
 @strawberry.type
 class Query:
     node: relay.Node = relay.node()
@@ -1414,6 +1838,14 @@ class Mutation:
     )
     delete_diet: DeletedNode = strawberry.field(
         resolver=mutations.diets.delete_diet,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    update_diet_profiles: Diet = strawberry.field(
+        resolver=mutations.diets.update_diet_profiles,
+        permission_classes=[IsAuthenticatedWithOrganization],
+    )
+    generate_diet_output: DietOutputVersion = strawberry.field(
+        resolver=mutations.diets.generate_diet_output,
         permission_classes=[IsAuthenticatedWithOrganization],
     )
 

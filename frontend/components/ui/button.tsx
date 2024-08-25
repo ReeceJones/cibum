@@ -20,6 +20,9 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghostDestructive:
+          "hover:bg-destructive hover:text-destructive-foreground",
+        ghostSecondary: "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         accent: "bg-accent text-accent-foreground hover:bg-accent/90",
       },
@@ -45,6 +48,8 @@ const spinnerColors = {
   "outline-destructive": "hsl(var(--text-destructive-foreground))",
   secondary: "hsl(var(--text-secondary-foreground))",
   ghost: "hsl(var(--text-accent-foreground))",
+  ghostDestructive: "hsl(var(--text-accent-foreground))",
+  ghostSecondary: "hsl(var(--text-accent-foreground))",
   link: "hsl(var(--text-primary-foreground))",
   accent: "hsl(var(--text-accent-foreground))",
 };

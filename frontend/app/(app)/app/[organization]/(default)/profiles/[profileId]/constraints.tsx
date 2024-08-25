@@ -503,7 +503,7 @@ function DeleteConstraintAlertDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center space-x-3">
             <IconTrash size={24} />
-            <span>Delete Ingredient Cost</span>
+            <span>Delete Constraint</span>
           </AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete this constraint?
@@ -528,7 +528,7 @@ function Constraint({ constraint }: { constraint: ProfileConstraint }) {
       </TableCell>
       <TableCell className="text-right">
         {constraint.mode === ProfileConstraintMode.Literal &&
-        constraint.literalValue &&
+        constraint.literalValue != null &&
         constraint.literalUnit
           ? `${constraint.literalValue} ${constraint.literalUnit.symbol}`
           : "N/A"}
@@ -561,7 +561,7 @@ export function Constraints() {
       <CardHeader>
         <div className="flex space-x-2">
           <div className="flex-1 space-y-1">
-            <CardTitle>Ingredient Costs</CardTitle>
+            <CardTitle>Constraints</CardTitle>
             <CardDescription>
               Control what conditions diets using this profile must meet.
             </CardDescription>

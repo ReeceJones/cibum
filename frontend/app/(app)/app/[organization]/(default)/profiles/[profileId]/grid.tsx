@@ -1,5 +1,4 @@
 "use client";
-import { PageHeading } from "@/components/ui/heading";
 import { ProfileCards } from "./cards";
 import { ProfileProvider } from "./use-profile";
 import { useGraphQLQuery } from "@/lib/graphql";

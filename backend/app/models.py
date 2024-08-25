@@ -233,6 +233,9 @@ class ProfileIngredientNutrientValue(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_ingredient_nutrient_values"
     )
+    unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileIngredientNutrientValue.unit_id"
+    )
 
 
 class ProfileIngredientConstraint(Base):
@@ -257,6 +260,9 @@ class ProfileIngredientConstraint(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_ingredient_constraints"
     )
+    literal_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileIngredientConstraint.literal_unit_id"
+    )
 
 
 class ProfileNutrientConstraint(Base):
@@ -279,6 +285,9 @@ class ProfileNutrientConstraint(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_nutrient_constraints"
     )
+    literal_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileNutrientConstraint.literal_unit_id"
+    )
 
 
 class ProfileConstraint(Base):
@@ -292,6 +301,9 @@ class ProfileConstraint(Base):
 
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_constraints"
+    )
+    literal_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileConstraint.literal_unit_id"
     )
 
 
@@ -313,6 +325,18 @@ class ProfileNutrientValue(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_nutrient_values"
     )
+    gross_energy_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileNutrientValue.gross_energy_unit_id"
+    )
+    digestible_energy_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileNutrientValue.digestible_energy_unit_id"
+    )
+    metabolizable_energy_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileNutrientValue.metabolizable_energy_unit_id"
+    )
+    net_energy_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileNutrientValue.net_energy_unit_id"
+    )
 
 
 class ProfileIngredientCost(Base):
@@ -325,6 +349,9 @@ class ProfileIngredientCost(Base):
 
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="profile_ingredient_costs"
+    )
+    literal_cost_unit: Mapped[Unit] = relationship(
+        "Unit", foreign_keys="ProfileIngredientCost.literal_cost_unit_id"
     )
 
 
@@ -374,6 +401,8 @@ class DietProfileConfiguration(Base):
     profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"), primary_key=True)
     order: Mapped[int] = mapped_column(index=True)
 
+    profile: Mapped[Profile] = relationship("Profile")
+
 
 class DietConfigurationVersion(Base):
     diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
@@ -383,31 +412,69 @@ class DietConfigurationVersion(Base):
 class DietOutputVersion(Base):
     diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(index=True)
 
 
 class DietIngredientOutput(Base):
     diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
     ingredient_id: Mapped[int] = mapped_column(
         ForeignKey("ingredient.id"), primary_key=True
     )
-    version: Mapped[int] = mapped_column(primary_key=True)
     amount: Mapped[float]
-    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+    amount_unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+    cost: Mapped[float | None]
+    cost_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    gross_energy: Mapped[float | None]
+    gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    digestible_energy: Mapped[float | None]
+    digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    metabolizable_energy: Mapped[float | None]
+    metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(
+        ForeignKey("unit.id")
+    )
+    net_energy: Mapped[float | None]
+    net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
 
 
-# class DietSummaryOutput(Base):
-#     diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
-#     version: Mapped[int] = mapped_column(primary_key=True)
-#     name: Mapped[str] = mapped_column(index=True)
-#     description: Mapped[str | None]
-#     gross_energy: Mapped[float | None]
-#     gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
-#     digestible_energy: Mapped[float | None]
-#     digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
-#     metabolizable_energy: Mapped[float | None]
-#     metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
-#     net_energy: Mapped[float | None]
-#     net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+class DietIngredientNutrientOutput(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_id: Mapped[int] = mapped_column(
+        ForeignKey("ingredient.id"), primary_key=True
+    )
+    nutrient_id: Mapped[int] = mapped_column(
+        ForeignKey("nutrient.id"), primary_key=True
+    )
+    amount: Mapped[float]
+    amount_unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+    gross_energy: Mapped[float | None]
+    gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    digestible_energy: Mapped[float | None]
+    digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    metabolizable_energy: Mapped[float | None]
+    metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(
+        ForeignKey("unit.id")
+    )
+    net_energy: Mapped[float | None]
+    net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+
+
+class DietSummaryOutput(Base):
+    diet_id: Mapped[int] = mapped_column(ForeignKey("diet.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    cost: Mapped[float | None]
+    cost_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    gross_energy: Mapped[float | None]
+    gross_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    digestible_energy: Mapped[float | None]
+    digestible_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
+    metabolizable_energy: Mapped[float | None]
+    metabolizable_energy_unit_id: Mapped[str | None] = mapped_column(
+        ForeignKey("unit.id")
+    )
+    net_energy: Mapped[float | None]
+    net_energy_unit_id: Mapped[str | None] = mapped_column(ForeignKey("unit.id"))
 
 
 class Diet(Base):

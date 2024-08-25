@@ -1,3 +1,5 @@
+import { DietGrid } from "./grid";
+
 export default function DietPage() {
-  return null;
+  return <DietGrid />;
 }
