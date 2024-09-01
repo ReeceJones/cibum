@@ -1,7 +1,7 @@
 name: deploy-istio
 run-name: Deploy Istio
 concurrency:
-  group: istio
+  group: infra
   cancel-in-progress: true
 on:
   push:
