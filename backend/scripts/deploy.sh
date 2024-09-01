@@ -14,6 +14,7 @@ REQUIRED_ENV_VARS=(
     "FRONTEND_URLS"
     "DB_URI"
     "REDIS_URI"
+    "GATEWAY_HOSTNAME"
 )
 
 # check required env vars

@@ -16,4 +16,4 @@ env:
 
 httpRoute:
   hostnames:
-    - "${FRONTEND_URLS}"
+    - "${GATEWAY_HOSTNAME}"

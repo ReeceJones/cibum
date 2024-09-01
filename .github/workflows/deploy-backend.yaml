@@ -41,6 +41,7 @@ jobs:
           FRONTEND_URLS: ${{ secrets.FRONTEND_URLS }}
           DB_URI: "postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.POSTGRES_HOST }}/${{ secrets.DB_NAME }}"
           REDIS_URI: "redis://${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}:6379/0"
+          GATEWAY_HOSTNAME: ${{ secrets.GATEWAY_HOSTNAME }}
           BUILD: "true"
           CHECK_REQUIRED_ENV_VARS: "true"
           WAIT: "true"
