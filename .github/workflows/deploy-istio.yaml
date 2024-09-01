@@ -8,8 +8,13 @@ on:
   push:
     paths:
       - "infra/istio/**"
+      - ".github/workflows/deploy-istio.yaml"
     branches:
       - main
+  workflow_dispatch:
+    # only repo admins can run this workflow manually
+    permissions:
+      users: ["reecejones"]
 jobs:
   deploy-istio:
     runs-on: ubuntu-latest
