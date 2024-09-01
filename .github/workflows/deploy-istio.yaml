@@ -1,5 +1,9 @@
 name: deploy-istio
 run-name: Deploy Istio
+concurrency:
+  group: istio
+  cancel-in-progress: true
+  timeout-minutes: 60
 on:
   push:
     paths:
@@ -7,9 +11,9 @@ on:
     branches:
       - main
   workflow_dispatch:
-    # only @ReeceJones can run this workflow
+    # only repo admins can run this workflow manually
     permissions:
-      users: ["reecejones"]
+      users: [github-actions[bot], "reecejones"]
 jobs:
   deploy-istio:
     runs-on: ubuntu-latest
