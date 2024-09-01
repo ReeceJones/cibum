@@ -1,0 +1,49 @@
+name: deploy-backend
+run-name: Deploy Backend
+concurrency:
+  group: backend
+  cancel-in-progress: true
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yaml"
+    branches:
+      - main
+  workflow_dispatch:
+    # only repo admins can run this workflow manually
+    permissions:
+      users: ["reecejones"]
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: latest
+        id: install_helm
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_K8S_CLUSTER_ID }}
+      - name: Install Backend Chart
+        env:
+          CLERK_API_URL: ${{ secrets.CLERK_API_URL }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          FRONTEND_URLS: ${{ secrets.FRONTEND_URLS }}
+          DB_URI: "postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.POSTGRES_HOST }}/${{ secrets.DB_NAME }}"
+          REDIS_URI: "redis://${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}:6379/0"
+          BUILD: "true"
+          CHECK_REQUIRED_ENV_VARS: "true"
+          WAIT: "true"
+          # add commit hash to image tag
+          IMAGE_TAG: "0.0.0-${{ github.sha }}"
+          IMAGE_REPO: "registry.digitalocean.com/cibum"
+        run: |
+          ./backend/scripts/deploy.sh
