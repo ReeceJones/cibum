@@ -1,5 +1,5 @@
-name: deploy-istio
-run-name: Deploy Istio
+name: deploy-infra
+run-name: Deploy Infra
 concurrency:
   group: infra
   cancel-in-progress: true
@@ -16,7 +16,7 @@ on:
     permissions:
       users: ["reecejones"]
 jobs:
-  deploy-istio:
+  deploy-infra:
     runs-on: ubuntu-latest
     environment: production
     steps:
