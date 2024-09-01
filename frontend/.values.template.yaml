@@ -1,0 +1,7 @@
+env:
+  - name: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    value: "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+  - name: CLERK_SECRET_KEY
+    value: "${CLERK_SECRET_KEY}"
+  - name: NEXT_PUBLIC_API_URL
+    value: "${NEXT_PUBLIC_API_URL}"

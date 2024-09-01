@@ -1,0 +1,15 @@
+env:
+  - name: CLERK_API_URL
+    value: "${CLERK_API_URL}"
+  - name: CLERK_SECRET_KEY
+    value: "${CLERK_SECRET_KEY}"
+  - name: FRONTEND_URLS
+    value: "${FRONTEND_URLS}"
+  - name: DB_URI
+    value: "${DB_URI}"
+  - name: REDIS_URI
+    value: "${REDIS_URI}"
+  - name: TESTING
+    value: "false"
+  - name: ECHO_SQL
+    value: "false"

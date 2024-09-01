@@ -72,6 +72,7 @@ import { updateNutrientCategoryMutation } from "@/lib/mutations/update-nutrient-
 import { createNutrientCategoryMutation } from "@/lib/mutations/create-nutrient-category";
 import { deleteNutrientCategoryMutation } from "@/lib/mutations/delete-nutrient-category";
 import { deleteNutrientMutation } from "@/lib/mutations/delete-nutrient";
+import * as uuid from "uuid";
 
 type NutrientTreeNode = {
   type: "nutrient" | "category";
@@ -279,7 +280,7 @@ function EditNutrientDialog({
 
   useEffect(() => {
     form.reset(nutrient);
-  }, [nutrient]);
+  }, [nutrient, form]);
 
   const onSave = useCallback(
     async (values: z.infer<typeof nutrientSchema>) => {
@@ -295,7 +296,7 @@ function EditNutrientDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [update, node.index, setOpen]
+    [update, node.index, setOpen, form, onOpenChange, mutation]
   );
 
   return (
@@ -372,7 +373,7 @@ function EditNutrientCategoryDialog({
 
   useEffect(() => {
     form.reset(nutrientCategory);
-  }, [nutrientCategory]);
+  }, [nutrientCategory, form]);
 
   const onSave = useCallback(
     async (values: z.infer<typeof nutrientCategorySchema>) => {
@@ -388,7 +389,7 @@ function EditNutrientCategoryDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [update, node.index, setOpen]
+    [update, node.index, setOpen, form, mutation, onOpenChange]
   );
 
   return (
@@ -436,7 +437,7 @@ function AddNutrientDialog({
     resolver: zodResolver(nutrientSchema),
     defaultValues: {
       nutrient_category_id: nutrientCategoryId,
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       managed: false,
     },
   });
@@ -479,7 +480,7 @@ function AddNutrientDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [append, setOpen]
+    [append, setOpen, mutation, onOpenChange]
   );
 
   return (
@@ -528,7 +529,7 @@ function AddNutrientCategoryDialog({
   const form = useForm<z.infer<typeof nutrientCategorySchema>>({
     resolver: zodResolver(nutrientCategorySchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       parent_id: nutrientCategoryId,
       managed: false,
     },
@@ -574,7 +575,7 @@ function AddNutrientCategoryDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [append, setOpen]
+    [append, setOpen, mutation, onOpenChange]
   );
 
   return (
@@ -713,7 +714,14 @@ export function NutrientCategoryRow({ node }: { node: NutrientTreeNode }) {
     } finally {
       setDeleteDisabled(false);
     }
-  }, [nutrientRemove, categoryRemove, node.index, childIndex]);
+  }, [
+    nutrientRemove,
+    categoryRemove,
+    node.index,
+    childIndex,
+    node.id,
+    mutation,
+  ]);
 
   if (!nutrientCategory || nutrientCategory.id !== node.id) {
     return null;
@@ -849,7 +857,7 @@ export function NutrientRow({ node }: { node: NutrientTreeNode }) {
     } finally {
       setDeleteDisabled(false);
     }
-  }, [remove, node.index, node.id]);
+  }, [remove, node.index, node.id, mutation]);
 
   if (!nutrient || nutrient.id !== node.id) {
     return null;

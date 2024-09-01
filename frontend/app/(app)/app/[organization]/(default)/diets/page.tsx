@@ -15,7 +15,7 @@ export default function DietsPage() {
         <CardHeader>
           <CardTitle>Diets</CardTitle>
           <CardDescription>
-            Manage your organization's diets here.
+            Manage your organization&apos;s diets here.
           </CardDescription>
         </CardHeader>
         <CardContent>

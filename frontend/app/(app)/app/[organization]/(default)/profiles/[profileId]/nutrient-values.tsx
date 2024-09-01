@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteProfileNutrientValueMutation } from "@/lib/mutations/delete-profile-nutrient-value";
 import { VirtualizedUnitComboBox } from "@/components/ui/unit-combobox";
+import * as uuid from "uuid";
 
 function NutrientValueForm({
   form,
@@ -260,7 +261,7 @@ function AddNutrientValueDialogContent({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof profileNutrientValueSchema>>({
     resolver: zodResolver(profileNutrientValueSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
     },
   });
   const createProfileNutrientValue = useGraphQLMutation(

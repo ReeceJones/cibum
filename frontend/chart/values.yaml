@@ -1,30 +1,22 @@
-# Default values for backend.
+# Default values for frontend.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: localhost:5000/backend
+  repository: nginx
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: ""
 
 env:
-  - name: CLERK_API_URL
-    value: "<CLERK_API_URL>"
+  - name: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    value: "<NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY>"
   - name: CLERK_SECRET_KEY
     value: "<CLERK_SECRET_KEY>"
-  - name: FRONTEND_URLS
-    value: "http://localhost:3000"
-  - name: DB_URI
-    value: "postgresql+asyncpg://cibum:cibum@infra-postgresql.default/cibum"
-  - name: REDIS_URI
-    value: "redis://:cibum@infra-redis-master.default:6379/0"
-  - name: TESTING
-    value: "false"
-  - name: ECHO_SQL
-    value: "false"
+  - name: NEXT_PUBLIC_API_URL
+    value: "http://localhost:8000"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -67,7 +59,7 @@ httpRoute:
   hostnames:
     - "cibum.local"
   match:
-    - path: "/api"
+    - path: "/"
       servicePath: "/"
 
 resources:
@@ -85,11 +77,11 @@ resources:
 
 livenessProbe:
   httpGet:
-    path: /graphql
+    path: /
     port: http
 readinessProbe:
   httpGet:
-    path: /graphql
+    path: /
     port: http
 
 autoscaling:

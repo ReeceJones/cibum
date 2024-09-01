@@ -10,9 +10,9 @@ SCRIPT_DIR=$(dirname "$0")
 
 # build
 if [ "$BUILD" = true ]; then
-  echo "Building the backend"
+  echo "Building the frontend"
   "$SCRIPT_DIR/build.sh"
 fi
 
 # deploy
-helm upgrade --install backend "$SCRIPT_DIR/../chart" --set image.repository="$IMAGE_REPO/backend" --set image.tag="$IMAGE_TAG" -f "${SCRIPT_DIR}/../.values.yaml" --wait="$WAIT"
+helm upgrade --install frontend "$SCRIPT_DIR/../chart" --set image.repository="$IMAGE_REPO/frontend" --set image.tag="$IMAGE_TAG" -f "${SCRIPT_DIR}/../.values.yaml" --wait="$WAIT"

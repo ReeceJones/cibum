@@ -1,0 +1,14 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+!.next/static
+!.next/standalone
+.git
+chart
+scripts
+.values.yaml
+.values.template.yaml
+.env.local

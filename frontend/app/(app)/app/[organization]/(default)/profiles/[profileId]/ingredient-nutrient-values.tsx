@@ -72,6 +72,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deleteProfileIngredientNutrientValueMutation } from "@/lib/mutations/delete-profile-ingredient-nutrient-value";
+import * as uuid from "uuid";
 
 function IngredientNutrientValueForm({
   form,
@@ -167,7 +168,7 @@ function AddIngredientNutrientValueDialogContent({
   const form = useForm<z.infer<typeof profileIngredientNutrientValueSchema>>({
     resolver: zodResolver(profileIngredientNutrientValueSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
     },
   });
   const createProfileIngredientNutrientValue = useGraphQLMutation(

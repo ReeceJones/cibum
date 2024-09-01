@@ -26,7 +26,7 @@ export function DietGrid() {
       const diet: Diet = data.node as Diet;
       setOutput(diet.latestOutputVersion as DietOutputVersion);
     }
-  }, [data]);
+  }, [data, status]);
 
   if (status === "pending") {
     return (

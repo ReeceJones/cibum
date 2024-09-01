@@ -147,7 +147,7 @@ function CreateOrganizationForm() {
                 <FormLabel>Logo</FormLabel>
                 {field.value && (
                   <div className="w-20 h-20">
-                    <img src={URL.createObjectURL(field.value)} />
+                    <img src={URL.createObjectURL(field.value)} alt="Logo" />
                   </div>
                 )}
                 <div className="flex items-center space-x-2">
@@ -187,7 +187,7 @@ function CreateOrganizationForm() {
                 </FormControl>
                 <FormDescription>
                   The unique identifier for your organization within Cibum. We
-                  will generate one for you if you don't provide one.
+                  will generate one for you if you don&apos;t provide one.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

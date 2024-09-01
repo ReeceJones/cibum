@@ -15,3 +15,4 @@ export const PageHeading = forwardRef<
     </header>
   );
 });
+PageHeading.displayName = "PageHeading";

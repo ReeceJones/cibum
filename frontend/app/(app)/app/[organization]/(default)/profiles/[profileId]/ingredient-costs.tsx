@@ -75,6 +75,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteProfileIngredientCostMutation } from "@/lib/mutations/delete-profile-ingredient-cost";
 import { VirtualizedUnitComboBox } from "@/components/ui/unit-combobox";
+import * as uuid from "uuid";
 
 function IngredientCostForm({
   form,
@@ -147,7 +148,7 @@ function AddIngredientCostDialogContent({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof profileIngredientCostSchema>>({
     resolver: zodResolver(profileIngredientCostSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       mode: IngredientCostMode.Literal,
     },
   });

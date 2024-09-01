@@ -98,6 +98,7 @@ import {
 import { deleteProfileIngredientConstraintMutation } from "@/lib/mutations/delete-profile-ingredient-constraint";
 import { Switch } from "@/components/ui/switch";
 import { VirtualizedIngredientCategoryComboBox } from "@/components/ui/ingredient-category-combobox";
+import * as uuid from "uuid";
 
 function IngredientRuleForm({
   form,
@@ -367,7 +368,7 @@ function AddIngredientRuleDialogContent({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof profileIngredientConstraintSchema>>({
     resolver: zodResolver(profileIngredientConstraintSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       type: IngredientConstraintType.Ingredient,
       mode: IngredientConstraintMode.Literal,
     },

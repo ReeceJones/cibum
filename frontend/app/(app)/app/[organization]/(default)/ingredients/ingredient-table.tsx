@@ -72,6 +72,7 @@ import { updateIngredientCategoryMutation } from "@/lib/mutations/update-ingredi
 import { createIngredientCategoryMutation } from "@/lib/mutations/create-ingredient-category";
 import { deleteIngredientCategoryMutation } from "@/lib/mutations/delete-ingredient-category";
 import { deleteIngredientMutation } from "@/lib/mutations/delete-ingredient";
+import * as uuid from "uuid";
 
 type IngredientTreeNode = {
   type: "ingredient" | "category";
@@ -279,7 +280,7 @@ function EditIngredientDialog({
 
   useEffect(() => {
     form.reset(ingredient);
-  }, [ingredient]);
+  }, [ingredient, form]);
 
   const onSave = useCallback(
     async (values: z.infer<typeof ingredientSchema>) => {
@@ -295,7 +296,7 @@ function EditIngredientDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [update, node.index, setOpen]
+    [update, node.index, setOpen, form, mutation, onOpenChange]
   );
 
   return (
@@ -372,7 +373,7 @@ function EditIngredientCategoryDialog({
 
   useEffect(() => {
     form.reset(ingredientCategory);
-  }, [ingredientCategory]);
+  }, [ingredientCategory, form]);
 
   const onSave = useCallback(
     async (values: z.infer<typeof ingredientCategorySchema>) => {
@@ -388,7 +389,7 @@ function EditIngredientCategoryDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [update, node.index, setOpen]
+    [update, node.index, setOpen, form, mutation, onOpenChange]
   );
 
   return (
@@ -436,7 +437,7 @@ function AddIngredientDialog({
     resolver: zodResolver(ingredientSchema),
     defaultValues: {
       ingredient_category_id: ingredientCategoryId,
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       managed: false,
     },
   });
@@ -479,7 +480,7 @@ function AddIngredientDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [append, setOpen]
+    [append, setOpen, onOpenChange, mutation]
   );
 
   return (
@@ -528,7 +529,7 @@ function AddIngredientCategoryDialog({
   const form = useForm<z.infer<typeof ingredientCategorySchema>>({
     resolver: zodResolver(ingredientCategorySchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       parent_id: ingredientCategoryId,
       managed: false,
     },
@@ -574,7 +575,7 @@ function AddIngredientCategoryDialog({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [append, setOpen]
+    [append, setOpen, onOpenChange, mutation]
   );
 
   return (
@@ -715,7 +716,14 @@ export function IngredientCategoryRow({ node }: { node: IngredientTreeNode }) {
     } finally {
       setDeleteDisabled(false);
     }
-  }, [ingredientRemove, categoryRemove, node.index, childIndex]);
+  }, [
+    ingredientRemove,
+    categoryRemove,
+    node.index,
+    childIndex,
+    mutation,
+    node.id,
+  ]);
 
   if (!ingredientCategory || ingredientCategory.id !== node.id) {
     return null;
@@ -854,7 +862,7 @@ export function IngredientRow({ node }: { node: IngredientTreeNode }) {
     } finally {
       setDeleteDisabled(false);
     }
-  }, [remove, node.index, node.id]);
+  }, [remove, node.index, node.id, mutation]);
 
   if (!ingredient || ingredient.id !== node.id) {
     return null;

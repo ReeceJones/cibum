@@ -85,6 +85,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import * as uuid from "uuid";
 
 function ConstraintForm({
   form,
@@ -209,7 +210,7 @@ function AddConstraintDialogContent({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof profileConstraintSchema>>({
     resolver: zodResolver(profileConstraintSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       mode: ProfileConstraintMode.Literal,
     },
   });

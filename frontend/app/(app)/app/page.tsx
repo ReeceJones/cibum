@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { organizationRoute } from "@/lib/routes/organization";
 import Link from "next/link";
 
-export const dynamic = "force";
+export const dynamic = "force-dynamic";
 
 export default async function AppIndexPage() {
   const user = await currentUser();

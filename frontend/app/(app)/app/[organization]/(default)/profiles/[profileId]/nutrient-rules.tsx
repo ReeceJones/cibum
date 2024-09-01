@@ -99,6 +99,7 @@ import {
 import { deleteProfileNutrientConstraintMutation } from "@/lib/mutations/delete-profile-nutrient-constraint";
 import { VirtualizedNutrientCategoryComboBox } from "@/components/ui/nutrient-category-combobox";
 import { Switch } from "@/components/ui/switch";
+import * as uuid from "uuid";
 
 function NutrientRuleForm({
   form,
@@ -364,7 +365,7 @@ function AddNutrientRuleDialogContent({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof profileNutrientConstraintSchema>>({
     resolver: zodResolver(profileNutrientConstraintSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
       mode: NutrientConstraintMode.Literal,
       type: NutrientConstraintType.Nutrient,
     },

@@ -31,12 +31,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import * as uuid from "uuid";
 
 function CreateDietForm({ onSave }: { onSave: () => void }) {
   const form = useForm<z.infer<typeof dietSchema>>({
     resolver: zodResolver(dietSchema),
     defaultValues: {
-      id: crypto.randomUUID(),
+      id: uuid.v4(),
     },
   });
 

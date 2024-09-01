@@ -1,13 +1,9 @@
 {
   "schema": "http://127.0.0.1:8000/graphql",
-  "documents": [
-    "./**/*.tsx",
-    "./**/*.ts"
-  ],
+  "documents": ["./**/*.tsx", "./**/*.ts"],
   "generates": {
     "./lib/gql/": {
-      "preset": "client",
-      "plugins": ["typescript"]
+      "preset": "client"
     }
   }
 }

@@ -1,0 +1,28 @@
+{{- if .Values.httpRoute.enabled -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "frontend.fullname" . }}
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+  - name: {{ .Values.httpRoute.gateway }}
+  hostnames: {{ .Values.httpRoute.hostnames | toJson }}
+  rules:
+  {{- range .Values.httpRoute.match }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: {{ .path }}
+    filters:
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            type: ReplacePrefixMatch
+            replacePrefixMatch: {{ .servicePath }}
+  {{- end }}
+    backendRefs:
+    - name: {{ include "frontend.fullname" . }}
+      port: {{ .Values.service.port }}
+{{- end -}}

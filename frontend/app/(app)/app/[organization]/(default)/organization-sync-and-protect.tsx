@@ -30,7 +30,14 @@ export function OrganizationSyncAndProtect({
       });
       void push("/app");
     }
-  }, [isLoaded, setActive, organization, userMemberships.data]);
+  }, [
+    isLoaded,
+    setActive,
+    organization,
+    userMemberships.data,
+    push,
+    userMemberships.isLoading,
+  ]);
 
   return children;
 }
