@@ -12,6 +12,8 @@ REQUIRED_ENV_VARS=(
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
     "CLERK_SECRET_KEY"
     "FRONTEND_URLS"
+    "DB_URI"
+    "REDIS_URI"
 )
 
 # check required env vars
