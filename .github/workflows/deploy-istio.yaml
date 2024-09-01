@@ -3,7 +3,6 @@ run-name: Deploy Istio
 concurrency:
   group: istio
   cancel-in-progress: true
-  timeout-minutes: 60
 on:
   push:
     paths:
