@@ -34,5 +34,12 @@ jobs:
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_K8S_CLUSTER_ID }}
       - name: Install Infrastructure Chart
+        env:
+          GATEWAY_HOSTNAME: ${{ secrets.GATEWAY_HOSTNAME }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          CHECK_REQUIRED_ENV_VARS: "true"
         run: |
           ./infra/infra/deploy.sh

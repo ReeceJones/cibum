@@ -1,7 +1,27 @@
 #!/bin/sh
 
+set -e
+
 SCRIPT_DIR=$(dirname "$0")
 CHART_DIR="$SCRIPT_DIR/../chart"
+CHECK_REQUIRED_ENV_VARS="false"
+REQUIRED_ENV_VARS=(
+    "POSTGRES_USER"
+    "POSTGRES_PASSWORD"
+    "POSTGRES_DB"
+    "GATEWAY_HOSTNAME"
+    "REDIS_PASSWORD"
+)
+
+# check required env vars
+if [ "$CHECK_REQUIRED_ENV_VARS" = "true" ]; then
+    for var in $REQUIRED_ENV_VARS; do
+    if [ -z "${!var}" ]; then
+        echo "Missing required env var: $var"
+        exit 1
+    fi
+    done
+fi
 
 # add bitnami repo
 helm repo add bitnami https://charts.bitnami.com/bitnami
