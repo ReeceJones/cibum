@@ -13,3 +13,5 @@ postgresql:
 redis:
   auth:
     password: cibum
+  replica:
+    replicaCount: 0
