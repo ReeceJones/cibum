@@ -26,7 +26,7 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save testing-cluster
+        run: doctl kubernetes cluster kubeconfig save bc413b3b-f47f-433b-b166-b1ce40130b23
       - name: Install Istio
         run: |
           ./infra/istio/install.sh
