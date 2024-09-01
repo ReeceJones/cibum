@@ -1,0 +1,29 @@
+name: deploy-istio
+run-name: Deploy Istio
+on:
+  push:
+    paths:
+      - "infra/istio/**"
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  deploy-istio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: latest
+        id: install_helm
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save testing-cluster
+      - name: Install Istio
+        run: |
+          ./infra/istio/install.sh
