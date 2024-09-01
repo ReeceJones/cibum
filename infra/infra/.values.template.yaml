@@ -1,0 +1,14 @@
+gateway:
+  hostname: ${GATEWAY_HOSTNAME}
+  port: 80
+
+postgresql:
+  auth:
+    enablePostgresUser: false
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    database: ${POSTGRES_DB}
+
+redis:
+  auth:
+    password: ${REDIS_PASSWORD}
