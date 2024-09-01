@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ClipLoader } from "react-spinners";
 import { Diet, DietOutputVersion } from "@/lib/gql/graphql";
 import { DietHeading } from "./heading";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function DietGrid() {
   const [output, setOutput] = useState<DietOutputVersion | null>(null);
@@ -20,6 +20,13 @@ export function DietGrid() {
     ...getProfile,
     queryKey: getDietKey({ dietId }),
   });
+
+  useEffect(() => {
+    if (status === "success" && data?.node) {
+      const diet: Diet = data.node as Diet;
+      setOutput(diet.latestOutputVersion as DietOutputVersion);
+    }
+  }, [data]);
 
   if (status === "pending") {
     return (

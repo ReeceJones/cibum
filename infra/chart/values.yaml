@@ -1,3 +1,8 @@
+gateway:
+  # hostname: "cibum.io"
+  hostname: "cibum.local"
+  port: 80
+
 postgresql:
   auth:
     enablePostgresUser: false

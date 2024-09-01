@@ -356,7 +356,7 @@ async def update_profile_ingredient_constraint(
         if utils.is_set(input.ingredient_category_id):
             if (
                 input.ingredient_category_id is None
-                and input.type == schemas.IngredientConstraintType.INGREDIENT
+                and input.type == schemas.IngredientConstraintType.INGREDIENT_CATEGORY
             ):
                 raise Exception(
                     "Ingredient category is required for ProfileIngredientConstraint"
@@ -382,27 +382,32 @@ async def update_profile_ingredient_constraint(
                 )
 
         if utils.is_set(input.ingredient_category_id):
-            if input.ingredient_category_id is None:
+            if (
+                input.ingredient_category_id is None
+                and input.type == schemas.IngredientConstraintType.INGREDIENT_CATEGORY
+            ):
                 raise Exception(
                     "Ingredient category is required for ProfileIngredientConstraint"
                 )
+            elif input.ingredient_category_id is None:
+                profile_ingredient_constraint.ingredient_category_id = None
+            else:
+                ingredient_category = await db.get(
+                    models.IngredientCategory, int(input.ingredient_category_id.node_id)
+                )
 
-            ingredient_category = await db.get(
-                models.IngredientCategory, int(input.ingredient_category_id.node_id)
-            )
+                if ingredient_category is None:
+                    raise Exception("Ingredient category not found")
 
-            if ingredient_category is None:
-                raise Exception("Ingredient category not found")
+                if (
+                    ingredient_category.organization_id is not None
+                    and ingredient_category.organization_id != info.context.user.org_id
+                ):
+                    raise Exception("Ingredient category not found")
 
-            if (
-                ingredient_category.organization_id is not None
-                and ingredient_category.organization_id != info.context.user.org_id
-            ):
-                raise Exception("Ingredient category not found")
-
-            profile_ingredient_constraint.ingredient_category_id = int(
-                input.ingredient_category_id.node_id
-            )
+                profile_ingredient_constraint.ingredient_category_id = int(
+                    input.ingredient_category_id.node_id
+                )
 
         if utils.is_set(input.mode):
             if input.mode is None:

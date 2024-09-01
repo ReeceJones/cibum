@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-gateway
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: http
+    {{- if .Values.gateway.hostname }}
+    hostname: {{ .Values.gateway.hostname | quote }}
+    {{- end }}
+    port: {{ .Values.gateway.port }}
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All

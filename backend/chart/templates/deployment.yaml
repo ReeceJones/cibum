@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "backend.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: PORT
+              value: {{ .Values.service.port | quote }}
+            # pull env from config map
+            - name: CLERK_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: CLERK_API_URL
+            - name: CLERK_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: CLERK_SECRET_KEY
+            - name: FRONTEND_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: FRONTEND_URLS
+            - name: DB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: DB_URI
+            - name: REDIS_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: REDIS_URI
+            - name: TESTING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: TESTING
+            - name: ECHO_SQL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "backend.fullname" . }}
+                  key: ECHO_SQL
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
