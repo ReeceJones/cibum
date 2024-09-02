@@ -5,3 +5,9 @@ env:
     value: "${CLERK_SECRET_KEY}"
   - name: NEXT_PUBLIC_API_URL
     value: "${NEXT_PUBLIC_API_URL}"
+
+httpRoute:
+  hostnames:
+    - "${GATEWAY_HOSTNAME}"
+
+imagePullSecrets: ${IMAGE_PULL_SECRETS}
