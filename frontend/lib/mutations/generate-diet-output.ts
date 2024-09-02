@@ -14,26 +14,38 @@ export const generateDietOutputMutaiton = graphql(`
         cost
         costUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
         amount
         amountUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
         grossEnergy
         grossEnergyUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
         digestibleEnergy
         digestibleEnergyUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
         metabolizableEnergy
         metabolizableEnergyUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
         netEnergy
         netEnergyUnit {
           symbol
+          baseUnitMultiplier
+          baseUnitOffset
         }
       }
     }

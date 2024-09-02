@@ -12,13 +12,67 @@ import { IconRepeat } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useDiet } from "./use-diet";
 import { toast } from "sonner";
-import { DietIngredientOutput, DietOutputVersion } from "@/lib/gql/graphql";
+import {
+  DietIngredientOutput,
+  DietOutputVersion,
+  Ingredient,
+} from "@/lib/gql/graphql";
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Badge } from "@/components/ui/badge";
 import { ClipLoader } from "react-spinners";
+
+function getTotals(output: DietOutputVersion): DietIngredientOutput {
+  // weighted sums of all rows
+  const weights = output.ingredientOutputs.reduce((acc, output) => {
+    acc[output.id] =
+      output.amount * (output.amountUnit.baseUnitMultiplier ?? 0.0);
+    return acc;
+  }, {} as Record<string, number>);
+
+  return {
+    id: "totals",
+    ingredient: {
+      id: "totals",
+      name: "Totals",
+    } as Ingredient,
+    amount: output.ingredientOutputs.reduce(
+      (acc, output) => acc + output.amount,
+      0
+    ),
+    amountUnit: output.ingredientOutputs[0].amountUnit,
+    cost: output.ingredientOutputs.reduce(
+      (acc, output) => acc + (output.cost ?? 0) * weights[output.id],
+      0
+    ),
+    costUnit: output.ingredientOutputs[0].costUnit,
+    grossEnergy: output.ingredientOutputs.reduce(
+      (acc, output) => acc + (output.grossEnergy ?? 0) * weights[output.id],
+      0
+    ),
+    grossEnergyUnit: output.ingredientOutputs[0].grossEnergyUnit,
+    digestibleEnergy: output.ingredientOutputs.reduce(
+      (acc, output) =>
+        acc + (output.digestibleEnergy ?? 0) * weights[output.id],
+      0
+    ),
+    digestibleEnergyUnit: output.ingredientOutputs[0].digestibleEnergyUnit,
+    metabolizableEnergy: output.ingredientOutputs.reduce(
+      (acc, output) =>
+        acc + (output.metabolizableEnergy ?? 0) * weights[output.id],
+      0
+    ),
+    metabolizableEnergyUnit:
+      output.ingredientOutputs[0].metabolizableEnergyUnit,
+    netEnergy: output.ingredientOutputs.reduce(
+      (acc, output) => acc + (output.netEnergy ?? 0) * weights[output.id],
+      0
+    ),
+    netEnergyUnit: output.ingredientOutputs[0].netEnergyUnit,
+  } as DietIngredientOutput;
+}
 
 export function Output() {
   const { diet, output, setOutput } = useDiet();
@@ -100,7 +154,7 @@ export function Output() {
 
   useEffect(() => {
     if (output) {
-      setRows([...output.ingredientOutputs]);
+      setRows([...output.ingredientOutputs, getTotals(output)]);
     }
   }, [output]);
 

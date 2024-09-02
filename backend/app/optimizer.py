@@ -10,8 +10,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-MAX_PRECISION = int(1e16)
-FLOAT_SCALING_FACTOR = int(1e12)
+MAX_PRECISION = int(1e14)
+FLOAT_SCALING_FACTOR = int(1e10)
 
 VariablesType = dict[tuple[str, ...], cp_model.IntVar]
 
@@ -71,19 +71,6 @@ def _build_nutrient_category_variables(
     return variables
 
 
-def _build_ingredient_cost_variables(
-    model: cp_model.CpModel, ingredient_costs: dict[int, int]
-) -> VariablesType:
-    variables: VariablesType = {}
-
-    for ingredient_id in ingredient_costs.keys():
-        key = ("ingredient_cost", str(ingredient_id))
-        variable = model.NewIntVar(0, MAX_PRECISION, ".".join(key))
-        variables[key] = variable
-
-    return variables
-
-
 def _build_nutrient_energy_variables(
     model: cp_model.CpModel, nutrient_energy_values: dict[int, NutrientEnergyValues]
 ) -> VariablesType:
@@ -104,7 +91,6 @@ def _build_variables(
     ingredient_categories: list[models.IngredientCategory],
     nutrients: list[models.Nutrient],
     nutrient_categories: list[models.NutrientCategory],
-    ingredient_costs: dict[int, int],
     nutrient_energy_values: dict[int, NutrientEnergyValues],
 ) -> VariablesType:
     return (
@@ -115,7 +101,6 @@ def _build_variables(
         )
         | _build_nutrient_variables(model, nutrients)
         | _build_nutrient_category_variables(model, nutrient_categories)
-        | _build_ingredient_cost_variables(model, ingredient_costs)
         | _build_nutrient_energy_variables(model, nutrient_energy_values)
     )
 
@@ -391,18 +376,6 @@ def _build_ingredient_composition_constraints(
             )
 
 
-def _build_ingredient_cost_constraints(
-    model: cp_model.CpModel,
-    variables: VariablesType,
-    ingredient_costs: dict[int, int],
-) -> None:
-    for ingredient_id, cost in ingredient_costs.items():
-        ingredient_cost_key = ("ingredient_cost", str(ingredient_id))
-        ingredient_cost_variable = variables[ingredient_cost_key]
-        model.Add(ingredient_cost_variable == cost)
-        model.AddHint(ingredient_cost_variable, cost)
-
-
 def _build_ingredient_energy_constraints(
     model: cp_model.CpModel,
     variables: VariablesType,
@@ -428,7 +401,6 @@ def _build_constraints(
     selected_profiles: list[models.DietProfileConfiguration],
     ingredients: list[models.Ingredient],
     nutrients: list[models.Nutrient],
-    ingredient_costs: dict[int, int],
     nutrient_energy_values: dict[int, NutrientEnergyValues],
     ingredient_compositions: dict[int, dict[int, int]],
 ) -> None:
@@ -436,7 +408,6 @@ def _build_constraints(
     _build_ingredient_weight_constraints(model, variables)
     _build_category_binding_constraints(model, variables, ingredients, nutrients)
     _build_ingredient_composition_constraints(model, variables, ingredient_compositions)
-    _build_ingredient_cost_constraints(model, variables, ingredient_costs)
     _build_ingredient_energy_constraints(model, variables, nutrient_energy_values)
 
     # profile constraints
@@ -449,13 +420,20 @@ def _build_constraints(
 def _build_objective(
     model: cp_model.CpModel,
     variables: VariablesType,
+    ingredient_costs: dict[int, int],
 ) -> None:
     # minimize cost
     # probably room for other objectives here like: maximize protein, minimize carbs, etc.
     # could even add these as secondary objectives with weights
+
     model.Minimize(
-        cp_model.LinearExpr.Sum(
-            [variables[k] for k in variables if k[0] == "ingredient_cost"]
+        cp_model.LinearExpr.WeightedSum(
+            [variables[k] for k in variables.keys() if k[0] == "ingredient"],
+            [
+                float(ingredient_costs.get(int(k[1]), 0) / FLOAT_SCALING_FACTOR)
+                for k in variables.keys()
+                if k[0] == "ingredient"
+            ],
         )
     )
 
@@ -913,6 +891,7 @@ async def _decode_solution(
 
         total_cost += ingredient_output.cost or 0
 
+    # TODO: the values stored in here need to be a weighted sum of the selected ingredients
     diet_summary_output = models.DietSummaryOutput(
         diet_id=diet.id,
         version=version,
@@ -954,7 +933,6 @@ async def generate_diet(
         ingredient_categories=ingredient_categories,
         nutrients=nutrients,
         nutrient_categories=nutrient_categories,
-        ingredient_costs=ingredient_costs,
         nutrient_energy_values=nutrient_energy_values,
     )
 
@@ -965,16 +943,16 @@ async def generate_diet(
         selected_profiles=selected_profiles,
         ingredients=ingredients,
         nutrients=nutrients,
-        ingredient_costs=ingredient_costs,
         nutrient_energy_values=nutrient_energy_values,
         ingredient_compositions=ingredient_compositions,
     )
 
     # setup objective function
-    _build_objective(model, variables)
+    _build_objective(model, variables, ingredient_costs=ingredient_costs)
 
     # get the optimized diet
     solver = cp_model.CpSolver()
+    # solver.parameters.log_search_progress = True
     solver.parameters.max_time_in_seconds = 60
     solver_status = solver.Solve(model)
 
@@ -991,6 +969,22 @@ async def generate_diet(
             status = schemas.DietOutputStatus.FEASIBLE
         case _:
             raise Exception(f"Unknown solver status: {solver_status}")
+
+    logging.info(f"Solver Status: {status}")
+
+    if status in (
+        schemas.DietOutputStatus.UNKNOWN,
+        schemas.DietOutputStatus.MODEL_INVALID,
+        schemas.DietOutputStatus.INFEASIBLE,
+    ):
+        return await _decode_solution(
+            db,
+            diet=diet,
+            status=status,
+            selected_ingredients={},
+            units=units,
+            ingredient_costs=ingredient_costs,
+        )
 
     # decode solution
     selected_ingredients = {}

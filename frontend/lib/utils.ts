@@ -19,7 +19,7 @@ export function mapOperator(operator: ConstraintOperator) {
     case ConstraintOperator.LessThanOrEqual:
       return "≤";
     case ConstraintOperator.NotEqual:
-      return "≤";
+      return "≠";
   }
 }
 
