@@ -1,0 +1,50 @@
+name: deploy-frontend
+run-name: Deploy Frontend
+concurrency:
+  group: frontend
+  cancel-in-progress: true
+on:
+  push:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yaml"
+    branches:
+      - main
+  workflow_dispatch:
+    # only repo admins can run this workflow manually
+    permissions:
+      users: ["reecejones"]
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: latest
+        id: install_helm
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean registry credentials
+        run: doctl registry login
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_K8S_CLUSTER_ID }}
+      - name: Install Frontend Chart
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: https://${{ secrets.GATEWAY_HOSTNAME }}/api
+          BUILD: "true"
+          CHECK_REQUIRED_ENV_VARS: "true"
+          WAIT: "true"
+          # add commit hash to image tag
+          IMAGE_TAG: "0.0.0-${{ github.sha }}"
+          IMAGE_REPO: "registry.digitalocean.com/cibum"
+          IMAGE_PULL_SECRETS: '[{"name": "cibum"}]'
+        run: |
+          ./frontend/scripts/deploy.sh
