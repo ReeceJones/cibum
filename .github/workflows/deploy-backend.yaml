@@ -48,6 +48,6 @@ jobs:
           # add commit hash to image tag
           IMAGE_TAG: "0.0.0-${{ github.sha }}"
           IMAGE_REPO: "registry.digitalocean.com/cibum"
-          IMAGE_PULL_SECRETS: '["cibum"]'
+          IMAGE_PULL_SECRETS: '[{"name": "cibum"}]'
         run: |
           ./backend/scripts/deploy.sh
