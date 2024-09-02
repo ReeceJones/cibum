@@ -10,4 +10,4 @@ httpRoute:
   hostnames:
     - "${GATEWAY_HOSTNAME}"
 
-imagePullSecrets: ${IMAGE_PULL_SECRETS}
+imagePullSecrets: "${IMAGE_PULL_SECRETS}"
