@@ -39,7 +39,7 @@ jobs:
           CLERK_API_URL: ${{ secrets.CLERK_API_URL }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           FRONTEND_URLS: ${{ secrets.FRONTEND_URLS }}
-          DB_URI: "postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.POSTGRES_HOST }}/${{ secrets.DB_NAME }}"
+          DB_URI: "postgresql+asyncpg://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.POSTGRES_HOST }}/${{ secrets.POSTGRES_DB }}"
           REDIS_URI: "redis://${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}:6379/0"
           GATEWAY_HOSTNAME: ${{ secrets.GATEWAY_HOSTNAME }}
           BUILD: "true"
